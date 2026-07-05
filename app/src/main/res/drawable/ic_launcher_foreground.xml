@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background circle -->
+    <path
+        android:fillColor="#8B7355"
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
+    <!-- "L" letter stylized -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,32L38,76L58,76L58,68L46,68L46,40L58,40L58,32Z"
+        android:strokeWidth="0" />
+    <!-- Wave accent -->
+    <path
+        android:fillColor="#B8A68E"
+        android:pathData="M62,42 Q68,38 74,42 Q80,46 74,46 Q68,46 62,50 Q56,54 50,50"
+        android:strokeColor="#B8A68E"
+        android:strokeWidth="2"
+        android:fillAlpha="0" />
+</vector>

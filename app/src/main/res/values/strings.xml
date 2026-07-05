@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Xi</string>
+
+    <!-- Bottom Navigation -->
+    <string name="tab_translate">翻译</string>
+    <string name="tab_essay">作文</string>
+    <string name="tab_settings">设置</string>
+
+    <!-- Translate Screen -->
+    <string name="translate_title">翻译</string>
+    <string name="translate_input_hint">输入要翻译的文本…</string>
+    <string name="translate_btn">翻译</string>
+    <string name="translate_result_label">翻译结果</string>
+    <string name="translate_overlay_btn">启用悬浮翻译窗</string>
+    <string name="translate_empty_title">开始翻译</string>
+    <string name="translate_empty_desc">输入英文或中文文本，AI 即刻为你翻译</string>
+    <string name="translate_error_empty">请输入文本</string>
+    <string name="translate_copy">复制</string>
+    <string name="translate_clear">清空</string>
+    <string name="translate_swap">交换语言</string>
+    <string name="thinking_level">思考程度</string>
+    <string name="translate_select_source">选择源语言</string>
+    <string name="translate_select_target">选择目标语言</string>
+
+    <!-- Essay Screen -->
+    <string name="essay_title">作文批改</string>
+    <string name="essay_input_hint">在此输入或粘贴英文作文…</string>
+    <string name="essay_correct_btn">批改作文</string>
+    <string name="essay_tab_corrections">修正标注</string>
+    <string name="essay_tab_corrected">修正范文</string>
+    <string name="essay_empty_title">提交作文批改</string>
+    <string name="essay_empty_desc">粘贴你的英文作文，AI 老师将逐句批改并给出修正范文</string>
+    <string name="essay_error_empty">请输入作文</string>
+    <string name="essay_no_errors">未发现明显错误</string>
+    <string name="essay_clear">清空</string>
+    <string name="essay_thinking_level">思考程度 (批改默认最深)</string>
+    <string name="essay_input_text">文字</string>
+    <string name="essay_input_photo">拍照</string>
+    <string name="essay_input_pdf">PDF</string>
+    <string name="essay_gallery">从相册选择</string>
+    <string name="essay_no_selection">点击上方按钮选择图片或 PDF</string>
+    <string name="essay_image_selected">已选择图片</string>
+    <string name="essay_pdf_pages">已加载 %d 页 PDF</string>
+    <string name="essay_score">评分分析</string>
+    <string name="essay_tab_tips">写作建议</string>
+    <string name="essay_error_no_image">请先选择一张图片</string>
+    <string name="essay_error_no_pdf">请先选择一个 PDF 文件</string>
+    <string name="error_image_read_failed">图片读取失败</string>
+    <string name="permission_camera_title">需要相机权限</string>
+    <string name="permission_camera_desc">拍照功能需要相机权限，请在系统设置中开启。</string>
+    <string name="permission_go_settings">去设置</string>
+    <string name="permission_cancel">取消</string>
+    <string name="guidance_api_key">请先在设置中配置 API Key</string>
+    <string name="guidance_model">请先在设置中选择模型</string>
+    <string name="guidance_network">网络不可用，请检查网络连接</string>
+
+    <string name="essay_grammar_correction">--- 语法纠错 ---</string>
+    <string name="essay_vocabulary_optimization">--- 词汇优化 ---</string>
+    <string name="essay_structure_analysis">--- 结构分析 ---</string>
+    <string name="essay_style_suggestions">--- 风格建议 ---</string>
+    <string name="essay_no_obvious_problems">未发现明显问题。</string>
+    <string name="essay_not_scored">未评分</string>
+    <string name="essay_no_suggestions">暂无建议</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">设置</string>
+    <string name="settings_section_ai">AI 服务配置</string>
+    <string name="settings_api_url">API 地址</string>
+    <string name="settings_api_url_placeholder">https://opencode.ai/zen/go/v1</string>
+    <string name="settings_api_key">API Key</string>
+    <string name="settings_api_key_placeholder">输入你的 API Key</string>
+    <string name="settings_model">模型</string>
+    <string name="settings_model_placeholder">请先测试连接以获取模型列表</string>
+    <string name="settings_test_connection">测试连接</string>
+    <string name="settings_connection_testing">测试中…</string>
+    <string name="settings_connection_success">连接成功，发现 %d 个模型</string>
+    <string name="settings_connection_fail">连接失败</string>
+    <string name="settings_section_about">关于</string>
+    <string name="settings_version">Xi v0.0.1</string>
+    <string name="settings_desc">AI 驱动的英语学习助手</string>
+    <string name="settings_default_model_info">默认使用 OpenCode Go 订阅 (mimo-v2.5 模型)</string>
+    <string name="settings_show_key">显示 API Key</string>
+    <string name="settings_hide_key">隐藏 API Key</string>
+
+    <!-- Overlay -->
+    <string name="overlay_notification_channel">翻译悬浮窗</string>
+    <string name="overlay_notification_title">Xi 翻译服务</string>
+    <string name="overlay_notification_text">悬浮翻译窗运行中</string>
+    <string name="overlay_panel_title">快速翻译</string>
+    <string name="overlay_input_hint">输入或粘贴文本…</string>
+    <string name="overlay_translate_btn">翻译</string>
+    <string name="overlay_result_label">结果</string>
+    <string name="overlay_close">关闭</string>
+    <string name="overlay_stop">停止悬浮窗</string>
+    <string name="overlay_qs_label">翻译悬浮窗</string>
+    <string name="overlay_qs_subtitle">快速翻译助手</string>
+
+    <!-- Common -->
+    <string name="loading">处理中…</string>
+    <string name="error_network">网络请求失败</string>
+    <string name="error_no_network">无网络连接，请检查网络设置</string>
+    <string name="error_api">API 错误: %s</string>
+    <string name="error_api_client">无法创建 API 客户端</string>
+    <string name="error_empty_key">请先在设置中填写 API Key</string>
+    <string name="error_result_empty">结果为空</string>
+    <string name="error_translate_result_empty">翻译结果为空</string>
+    <string name="error_essay_result_empty">批改结果为空</string>
+    <string name="error_translate_failed">翻译失败</string>
+    <string name="error_translate_timeout">翻译超时，请检查网络或重试</string>
+    <string name="error_essay_failed">批改失败</string>
+    <string name="error_network_detail">网络请求失败: %s</string>
+    <string name="error_parse_failed">AI 返回格式异常，请重试</string>
+    <string name="error_translation_empty">翻译结果为空，请重试</string>
+    <string name="error_invalid_json">AI 返回无效格式，请重试</string>
+    <string name="error_ai_not_english">输入内容不是英文，请提供英文作文</string>
+    <string name="error_ai_unreadable_image">图片无法识别，请提供更清晰的图片</string>
+    <string name="error_ai_generic">AI 处理异常: %s</string>
+    <string name="copy">复制</string>
+    <string name="retry">重试</string>
+</resources>
