@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
@@ -58,14 +57,14 @@ internal fun ResultCard(resultText: String, onCopy: () -> Unit) {
         label = "copy_scale"
     )
 
-    Column(modifier = Modifier.fillMaxWidth().animateContentSize().clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).padding(14.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().animateContentSize().clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).padding(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.translate_result_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
             Box(
                 modifier = Modifier
                     .size(28.dp)
                     .scale(copyScale)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(AppShape.mini)
                     .clickable(
                         interactionSource = copyInteractionSource,
                         indication = null,

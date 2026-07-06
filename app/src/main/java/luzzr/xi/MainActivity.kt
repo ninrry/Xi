@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 import luzzr.xi.ui.XiAppUI
 import luzzr.xi.core.ui.theme.XiTheme
@@ -17,6 +18,7 @@ class MainActivity : ComponentActivity() {
     private val startScreenFlow = MutableStateFlow<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         startScreenFlow.value = intent?.getStringExtra("target_screen")

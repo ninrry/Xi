@@ -6,7 +6,10 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
-    <style name="Theme.Xi.Splash" parent="Theme.Xi">
-        <item name="android:windowBackground">@color/ivory</item>
+    <style name="Theme.Xi.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ivory</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimationDuration">800</item>
+        <item name="postSplashScreenTheme">@style/Theme.Xi</item>
     </style>
 </resources>

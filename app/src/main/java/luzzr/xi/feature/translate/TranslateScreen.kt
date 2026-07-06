@@ -194,10 +194,10 @@ fun TranslateScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(44.dp)
+                    .height(48.dp)
                     .graphicsLayer { scaleX = btnScale; scaleY = btnScale }
                     .clip(AppShape.button)
-                    .background(if (uiState.isLoading) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary)
+                    .background(if (uiState.isLoading) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.primary)
                     .clickable(
                         enabled = !uiState.isLoading,
                         interactionSource = translateInteractionSource,
@@ -206,7 +206,7 @@ fun TranslateScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.5.dp)
                 } else {
                     Text(stringResource(R.string.translate_btn), fontSize = 15.sp, color = MaterialTheme.colorScheme.background, fontWeight = FontWeight.Medium)
                 }
@@ -286,7 +286,7 @@ private fun ClearButton(onClick: () -> Unit) {
 @Composable
 private fun EmptyState(title: String, desc: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        AbstractIcons.Translate(Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+        AbstractIcons.Translate(Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f))
         Spacer(modifier = Modifier.height(10.dp))
         Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(4.dp))
@@ -306,7 +306,7 @@ private fun OverlayToggleButton(context: Context) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .height(44.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale

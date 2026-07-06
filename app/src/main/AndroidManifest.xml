@@ -21,7 +21,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Xi">
+            android:theme="@style/Theme.Xi.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -40,7 +40,7 @@
         <service
             android:name=".feature.overlay.OverlayTileService"
             android:exported="true"
-            android:icon="@android:drawable/ic_menu_send"
+            android:icon="@drawable/ic_overlay_tile"
             android:label="@string/overlay_qs_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>

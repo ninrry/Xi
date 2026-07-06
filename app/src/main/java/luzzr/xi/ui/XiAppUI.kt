@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import luzzr.xi.core.ui.theme.AppShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,24 +68,23 @@ fun XiAppUI(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = innerPadding.calculateTopPadding()) // Preserve status bar padding if any
+                .padding(top = innerPadding.calculateTopPadding())
         ) {
-            // App content takes full space so lists can flow behind the bottom capsule bar
             AppNavigation(
                 navController = navController,
                 modifier = Modifier.fillMaxSize()
             )
 
-            // True Floating Navigation Bar (capsule style, 90% opacity MaterialTheme.colorScheme.background base)
+            // Floating capsule navigation bar — wider, more generous
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 20.dp)
-                    .width(220.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.9f))
-                    .border(0.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
-                    .padding(vertical = 4.dp, horizontal = 8.dp)
+                    .padding(bottom = 24.dp)
+                    .width(260.dp)
+                    .clip(AppShape.button)
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
+                    .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.button)
+                    .padding(vertical = 6.dp, horizontal = 12.dp)
             ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
@@ -133,27 +132,34 @@ private fun RowScope.FloatingNavItem(
 
     val tintColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
 
+    // Selected indicator background
+    val indicatorModifier = if (selected) {
+        Modifier
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(AppShape.small)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+    } else {
+        Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
+    }
+
     Box(
         modifier = Modifier
             .weight(1f)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .clip(RoundedCornerShape(16.dp))
+            .then(indicatorModifier)
+            .clip(AppShape.small)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             )
-            .padding(vertical = 4.dp),
+            .padding(vertical = 6.dp, horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            Box(modifier = Modifier.size(18.dp)) {
+            Box(modifier = Modifier.size(24.dp)) {
                 when (screen) {
                     Screen.Translate -> AbstractIcons.Translate(modifier = Modifier.fillMaxSize(), tint = tintColor)
                     Screen.Essay -> AbstractIcons.Edit(modifier = Modifier.fillMaxSize(), tint = tintColor)
@@ -162,7 +168,7 @@ private fun RowScope.FloatingNavItem(
             }
             Text(
                 text = stringResource(screen.titleResId),
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 color = tintColor,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
             )

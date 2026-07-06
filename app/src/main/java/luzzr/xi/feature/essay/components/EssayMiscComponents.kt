@@ -40,12 +40,12 @@ import androidx.compose.material3.MaterialTheme
 @Composable
 fun CorrectButton(isLoading: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "btn")
-    val pulse by infiniteTransition.animateFloat(initialValue = 1f, targetValue = 0.85f, animationSpec = infiniteRepeatable(tween(600), RepeatMode.Reverse), label = "pulse")
+    val pulse by infiniteTransition.animateFloat(initialValue = 1f, targetValue = 1.05f, animationSpec = infiniteRepeatable(tween(600), RepeatMode.Reverse), label = "pulse")
     
     val translateInteractionSource = remember { MutableInteractionSource() }
     val isTranslatePressed by translateInteractionSource.collectIsPressedAsState()
     val pressScale by animateFloatAsState(
-        targetValue = if (isTranslatePressed) 0.95f else 1f,
+        targetValue = if (isTranslatePressed) 0.92f else 1f,
         animationSpec = MotionTokens.springDefault(),
         label = "correct_press"
     )
@@ -55,7 +55,7 @@ fun CorrectButton(isLoading: Boolean, onClick: () -> Unit, modifier: Modifier = 
             .height(44.dp)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(AppShape.button)
-            .background(if (isLoading) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary)
+            .background(if (isLoading) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.primary)
             .clickable(
                 enabled = !isLoading,
                 interactionSource = translateInteractionSource,
@@ -64,7 +64,7 @@ fun CorrectButton(isLoading: Boolean, onClick: () -> Unit, modifier: Modifier = 
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.dp)
+        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.5.dp)
         else Text(stringResource(R.string.essay_correct_btn), fontSize = 15.sp, color = MaterialTheme.colorScheme.background, fontWeight = FontWeight.Medium)
     }
 }
@@ -72,7 +72,7 @@ fun CorrectButton(isLoading: Boolean, onClick: () -> Unit, modifier: Modifier = 
 @Composable
 fun EssayEmptyState(title: String, desc: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        AbstractIcons.Edit(Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+        AbstractIcons.Edit(Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f))
         Spacer(modifier = Modifier.height(10.dp))
         Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(4.dp))

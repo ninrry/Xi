@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -65,6 +66,7 @@ fun TranslationPanelContent(
     onInputChange: (String) -> Unit,
     resultText: String,
     isTranslating: Boolean,
+    isModelDownloading: Boolean = false,
     error: String?,
     sourceLang: SupportedLanguage,
     targetLang: SupportedLanguage,
@@ -98,7 +100,6 @@ fun TranslationPanelContent(
     var showSourcePicker by remember { mutableStateOf(false) }
     var showTargetPicker by remember { mutableStateOf(false) }
     var copied by remember { mutableStateOf(false) }
-    val copyResetScope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -122,13 +123,13 @@ fun TranslationPanelContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(stringResource(R.string.overlay_panel_title),
-                    fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground)
+                    fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     // U4: Copy button with success feedback
                     val copyInteraction = remember { MutableInteractionSource() }
                     val isCopyPressed by copyInteraction.collectIsPressedAsState()
                     val copyScale by animateFloatAsState(
-                        targetValue = if (isCopyPressed) 0.85f else 1f,
+                        targetValue = if (isCopyPressed) 0.90f else 1f,
                         animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
                         label = "copy"
                     )
@@ -143,7 +144,11 @@ fun TranslationPanelContent(
                             .clickable(interactionSource = copyInteraction, indication = null) {
                                 onCopy()
                                 copied = true
-                                copyResetScope.launch { delay(1500); copied = false }
+                                // Use a coroutine scope that survives recomposition
+                                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                                    delay(1500)
+                                    copied = false
+                                }
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -157,7 +162,7 @@ fun TranslationPanelContent(
                     val launchInteraction = remember { MutableInteractionSource() }
                     val isLaunchPressed by launchInteraction.collectIsPressedAsState()
                     val launchScale by animateFloatAsState(
-                        targetValue = if (isLaunchPressed) 0.85f else 1f,
+                        targetValue = if (isLaunchPressed) 0.90f else 1f,
                         animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
                         label = "launch"
                     )
@@ -179,7 +184,7 @@ fun TranslationPanelContent(
                     val closeInteraction = remember { MutableInteractionSource() }
                     val isClosePressed by closeInteraction.collectIsPressedAsState()
                     val closeScale by animateFloatAsState(
-                        targetValue = if (isClosePressed) 0.85f else 1f,
+                        targetValue = if (isClosePressed) 0.90f else 1f,
                         animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
                         label = "close"
                     )
@@ -251,7 +256,7 @@ fun TranslationPanelContent(
                 val swapInteraction = remember { MutableInteractionSource() }
                 val isSwapPressed by swapInteraction.collectIsPressedAsState()
                 val swapScale by animateFloatAsState(
-                    targetValue = if (isSwapPressed) 0.85f else 1f,
+                    targetValue = if (isSwapPressed) 0.90f else 1f,
                     animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
                     label = "swap"
                 )
@@ -348,7 +353,7 @@ fun TranslationPanelContent(
             OutlinedTextField(
                 value = inputText,
                 onValueChange = onInputChange,
-                modifier = Modifier.fillMaxWidth().height(80.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp, max = 120.dp),
                 placeholder = { Text(stringResource(R.string.overlay_input_hint), color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -367,7 +372,7 @@ fun TranslationPanelContent(
                 val translateInteraction = remember { MutableInteractionSource() }
                 val isTranslatePressed by translateInteraction.collectIsPressedAsState()
                 val translateScale by animateFloatAsState(
-                    targetValue = if (isTranslatePressed) 0.95f else 1f,
+                    targetValue = if (isTranslatePressed) 0.92f else 1f,
                     animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
                     label = "trans"
                 )
@@ -386,7 +391,7 @@ fun TranslationPanelContent(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(40.dp)
+                        .height(44.dp)
                         .graphicsLayer {
                             scaleX = btnScale
                             scaleY = btnScale
@@ -402,7 +407,14 @@ fun TranslationPanelContent(
                     contentAlignment = Alignment.Center
                 ) {
                     if (isTranslating) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.dp)
+                        if (isModelDownloading) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                CircularProgressIndicator(modifier = Modifier.size(14.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.dp)
+                                Text("模型下载中...", fontSize = 12.sp, color = MaterialTheme.colorScheme.background)
+                            }
+                        } else {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.dp)
+                        }
                     } else {
                         Text(stringResource(R.string.overlay_translate_btn), fontSize = 13.sp, color = MaterialTheme.colorScheme.background, fontWeight = FontWeight.Medium)
                     }
@@ -412,7 +424,7 @@ fun TranslationPanelContent(
                 val stopInteraction = remember { MutableInteractionSource() }
                 val isStopPressed by stopInteraction.collectIsPressedAsState()
                 val stopScale by animateFloatAsState(
-                    targetValue = if (isStopPressed) 0.85f else 1f,
+                    targetValue = if (isStopPressed) 0.90f else 1f,
                     animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
                     label = "stop"
                 )

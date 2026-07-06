@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.os.IBinder
 import android.provider.Settings
@@ -71,8 +72,8 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     companion object {
         val isRunning = java.util.concurrent.atomic.AtomicBoolean(false)
         private const val PANEL_TOGGLE_DEBOUNCE_MS = 300L
-        private const val PILL_WIDTH_DP = 8
-        private const val PILL_HEIGHT_DP = 40
+        private const val BUBBLE_SIZE_DP = 36
+        private const val EDGE_MARGIN_DP = 6
     }
 
     override fun onCreate() {
@@ -108,26 +109,25 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         return START_STICKY
     }
 
-    // ── Edge Pill ──────────────────────────────────────────────
+    // ── Floating Bubble ───────────────────────────────────────
 
     private fun showPill() {
         val density = resources.displayMetrics.density
         val screenWidth = resources.displayMetrics.widthPixels
         val displayHeight = resources.displayMetrics.heightPixels
-        val pillWidthPx = (PILL_WIDTH_DP * density).toInt()
-        val pillHeightPx = (PILL_HEIGHT_DP * density).toInt()
-        val marginX = 0 // flush against edge
+        val bubbleSizePx = (BUBBLE_SIZE_DP * density).toInt()
+        val marginX = (EDGE_MARGIN_DP * density).toInt()
 
         val params = WindowManager.LayoutParams(
-            pillWidthPx,
-            pillHeightPx,
+            bubbleSizePx,
+            bubbleSizePx,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = screenWidth - pillWidthPx - marginX
-            y = displayHeight / 2 - pillHeightPx / 2
+            x = screenWidth - bubbleSizePx - marginX
+            y = displayHeight / 2 - bubbleSizePx / 2
         }
 
         val view = androidx.compose.ui.platform.ComposeView(this).apply {
@@ -219,6 +219,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                         onInputChange = { text -> _uiState.update { it.copy(inputText = text) } },
                         resultText = state.resultText,
                         isTranslating = state.isTranslating,
+                        isModelDownloading = state.isModelDownloading,
                         error = state.errorMsg?.asString(context),
                         sourceLang = state.sourceLang,
                         targetLang = state.targetLang,
@@ -299,6 +300,34 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         pillView = null
     }
 
+    // ── Configuration change (screen rotation) ───────────────────
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Re-position bubble to stay within new screen bounds
+        pillView?.let { view ->
+            val density = resources.displayMetrics.density
+            val screenWidth = resources.displayMetrics.widthPixels
+            val displayHeight = resources.displayMetrics.heightPixels
+            val bubbleSizePx = (36 * density).toInt()
+            val marginPx = (6 * density).toInt()
+
+            val params = view.layoutParams as WindowManager.LayoutParams
+            // Keep bubble on right edge, clamp Y to new height
+            params.x = screenWidth - bubbleSizePx - marginPx
+            params.y = params.y.coerceIn(0, displayHeight - bubbleSizePx)
+            try {
+                windowManager.updateViewLayout(view, params)
+            } catch (e: Exception) {
+                Log.w("Overlay", "onConfigurationChanged update failed", e)
+            }
+        }
+        // Hide panel on rotation to avoid size mismatch
+        if (_uiState.value.isPanelVisible) {
+            hidePanel()
+        }
+    }
+
     // ── Business logic ────────────────────────────────────────
 
     private fun doTranslate() {
@@ -310,17 +339,21 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
         cancelTranslate()
         translateJob = serviceScope.launch {
-            _uiState.update { it.copy(isTranslating = true, errorMsg = null, resultText = "") }
+            _uiState.update { it.copy(isTranslating = true, isModelDownloading = false, errorMsg = null, resultText = "") }
             try {
-                val s = settingsDataStore.settings.first()
-                val engine = TranslationEngine.fromId(s.translationEngine)
+                val engine = _uiState.value.engine
+
+                // Show model downloading state for ML Kit
+                if (engine == TranslationEngine.MLKIT) {
+                    _uiState.update { it.copy(isModelDownloading = true) }
+                }
 
                 val result = translateUseCase(
                     text = text,
-                    sourceLang = _uiState.value.sourceLang.code,
-                    targetLang = _uiState.value.targetLang.code,
+                    sourceLang = _uiState.value.sourceLang.displayName,
+                    targetLang = _uiState.value.targetLang.displayName,
                     engine = engine,
-                    thinkingLevelId = s.translateThinkingLevel
+                    thinkingLevelId = settingsDataStore.settings.first().translateThinkingLevel
                 )
 
                 result.fold(
@@ -332,7 +365,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
                 _uiState.update { it.copy(errorMsg = UiText.StringResource(R.string.error_translate_timeout)) }
             } finally {
-                _uiState.update { it.copy(isTranslating = false) }
+                _uiState.update { it.copy(isTranslating = false, isModelDownloading = false) }
             }
         }
     }

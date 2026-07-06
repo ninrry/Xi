@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,7 +25,7 @@ data class TranslateUiState(
     val sourceLang: SupportedLanguage = SupportedLanguage.ENGLISH,
     val targetLang: SupportedLanguage = SupportedLanguage.CHINESE,
     val thinkingLevel: ThinkingLevel = ThinkingLevel.LOW,
-    val engine: TranslationEngine = TranslationEngine.AI,
+    val engine: TranslationEngine = TranslationEngine.MLKIT,
 )
 
 sealed interface TranslateUiEvent {
@@ -60,41 +61,43 @@ class TranslateViewModel @Inject constructor(
     fun onEvent(event: TranslateUiEvent) {
         when (event) {
             is TranslateUiEvent.InputChanged -> {
-                _uiState.value = _uiState.value.copy(inputText = event.text, error = null)
+                _uiState.update { it.copy(inputText = event.text, error = null) }
             }
             is TranslateUiEvent.SourceLangChanged -> {
                 if (event.lang != _uiState.value.targetLang) {
-                    _uiState.value = _uiState.value.copy(sourceLang = event.lang)
+                    _uiState.update { it.copy(sourceLang = event.lang) }
                 }
             }
             is TranslateUiEvent.TargetLangChanged -> {
                 if (event.lang != _uiState.value.sourceLang) {
-                    _uiState.value = _uiState.value.copy(targetLang = event.lang)
+                    _uiState.update { it.copy(targetLang = event.lang) }
                 }
             }
             is TranslateUiEvent.ThinkingLevelChanged -> {
-                _uiState.value = _uiState.value.copy(thinkingLevel = event.level)
+                _uiState.update { it.copy(thinkingLevel = event.level) }
                 viewModelScope.launch {
                     settingsDataStore.updateTranslateThinkingLevel(event.level.id)
                 }
             }
             is TranslateUiEvent.EngineChanged -> {
-                _uiState.value = _uiState.value.copy(engine = event.engine)
+                _uiState.update { it.copy(engine = event.engine) }
                 viewModelScope.launch {
                     settingsDataStore.updateTranslationEngine(event.engine.id)
                 }
             }
             TranslateUiEvent.SwapClicked -> {
                 val s = _uiState.value
-                _uiState.value = s.copy(
-                    sourceLang = s.targetLang,
-                    targetLang = s.sourceLang,
-                    inputText = s.resultText,
-                    resultText = ""
-                )
+                _uiState.update {
+                    it.copy(
+                        sourceLang = s.targetLang,
+                        targetLang = s.sourceLang,
+                        inputText = s.resultText,
+                        resultText = ""
+                    )
+                }
             }
             TranslateUiEvent.ClearClicked -> {
-                _uiState.value = _uiState.value.copy(inputText = "", resultText = "", error = null)
+                _uiState.update { it.copy(inputText = "", resultText = "", error = null) }
             }
             TranslateUiEvent.TranslateClicked -> {
                 translate()

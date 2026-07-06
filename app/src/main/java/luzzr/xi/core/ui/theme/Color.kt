@@ -1,7 +1,6 @@
 package luzzr.xi.core.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Shapes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -15,21 +14,15 @@ val WarmAccentLight = Color(0xFFB8A68E)
 val DividerColor = Color(0xFFE8E2DA)
 
 // Correction colors
-val CorrectionDelete = Color(0xFFD4574A)
-val CorrectionAdd = Color(0xFF4A8B5C)
+val CorrectionDelete = Color(0xFFC4856E)
+val CorrectionAdd = Color(0xFF7A9E7E)
 val CorrectionAddBg = Color(0xFFEAF5EC)
 val CorrectionNote = Color(0xFFB8860B)
-val CorrectionNoteBg = Color(0xFFFFF8E1)
-
-val XiShapes = Shapes(
-    small = RoundedCornerShape(4.dp),
-    medium = RoundedCornerShape(8.dp),
-    large = RoundedCornerShape(16.dp),
-)
+val CorrectionNoteBg = Color(0xFFF5F0E8)
 
 // Overlay
 val OverlayBg = Color(0xF5F4F1EA)
-val OverlayBubble = Color(0xCC8B7355)
+val OverlayBubble = Color(0x998B7355)
 
 // Shape tokens — consistent radii scale
 object AppShape {
@@ -45,4 +38,6 @@ object AppShape {
     val small = RoundedCornerShape(16.dp)
     /** Inline items, tips, corrections */
     val mini = RoundedCornerShape(12.dp)
+    /** Floating bubble / pill — fully round */
+    val bubble = RoundedCornerShape(50)
 }

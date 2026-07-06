@@ -70,7 +70,7 @@ internal fun LanguagePickerSheet(title: String, currentLang: SupportedLanguage, 
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(12.dp))
             val languages = SupportedLanguage.entries.filter { it != excludeLang }
             val rows = languages.chunked(2)
@@ -106,7 +106,7 @@ internal fun LanguagePickerSheet(title: String, currentLang: SupportedLanguage, 
                                     .semantics { contentDescription = lang.nativeName }
                             ) {
                                 Column {
-                                    Text(lang.nativeName, fontSize = 14.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
+                                    Text(lang.nativeName, fontSize = 14.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
                                     Text(lang.displayName, fontSize = 11.sp, color = if (isSelected) MaterialTheme.colorScheme.background.copy(alpha = 0.7f) else MaterialTheme.colorScheme.secondary)
                                 }
                             }

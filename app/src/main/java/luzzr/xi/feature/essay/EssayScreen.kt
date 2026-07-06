@@ -45,7 +45,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -69,7 +68,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -183,7 +181,7 @@ fun EssayScreen(
                     .clickable(interactionSource = textInteraction, indication = null) {
                         viewModel.onEvent(EssayUiEvent.InputModeChanged(InputMode.TEXT))
                     }
-                    .padding(vertical = 12.dp),
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 AbstractIcons.Edit(
@@ -219,7 +217,7 @@ fun EssayScreen(
                             }
                         }
                     }
-                    .padding(vertical = 12.dp),
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 AbstractIcons.Camera(
@@ -242,7 +240,7 @@ fun EssayScreen(
                     .clickable(interactionSource = pdfInteraction, indication = null) {
                         pdfLauncher.launch("application/pdf")
                     }
-                    .padding(vertical = 12.dp),
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 AbstractIcons.Document(
@@ -265,7 +263,7 @@ fun EssayScreen(
                     .clickable(interactionSource = galleryInteraction, indication = null) {
                         galleryLauncher.launch("*/*")
                     }
-                    .padding(vertical = 12.dp),
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 AbstractIcons.Gallery(
@@ -298,7 +296,7 @@ fun EssayScreen(
                         )
                     }
                 } else {
-                    Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).border(1.5.dp, MaterialTheme.colorScheme.outline, AppShape.card), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth().height(100.dp).clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.card), contentAlignment = Alignment.Center) {
                         Text(stringResource(R.string.essay_no_selection), color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp)
                     }
                 }
@@ -312,7 +310,7 @@ fun EssayScreen(
             }
             val clearInteractionSource = remember { MutableInteractionSource() }
             val isClearPressed by clearInteractionSource.collectIsPressedAsState()
-            val clearScale by animateFloatAsState(targetValue = if (isClearPressed) 0.88f else 1f, animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springGentle(), label = "clear_scale")
+            val clearScale by animateFloatAsState(targetValue = if (isClearPressed) 0.90f else 1f, animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springGentle(), label = "clear_scale")
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -353,7 +351,7 @@ fun EssayScreen(
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         AbstractIcons.Sparkle(Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.essay_score), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
+                        Text(stringResource(R.string.essay_score), fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
                     }
                     Text(uiState.overallScore, modifier = Modifier.padding(horizontal = 14.dp).padding(bottom = 6.dp), fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary, lineHeight = 18.sp)
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 14.dp), color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
@@ -382,7 +380,7 @@ fun EssayScreen(
                                     modifier = Modifier.semantics { contentDescription = title }
                                 )
                             },
-                            selectedContentColor = MaterialTheme.colorScheme.background,
+                            selectedContentColor = MaterialTheme.colorScheme.primary,
                             unselectedContentColor = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -439,7 +437,7 @@ fun EssayScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = stringResource(R.string.permission_camera_title),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -465,7 +463,10 @@ fun EssayScreen(
                             modifier = Modifier
                                 .clip(AppShape.button)
                                 .background(MaterialTheme.colorScheme.primary)
-                                .clickable {
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
                                     showPermissionDeniedDialog = false
                                     val intent = android.content.Intent(
                                         android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,

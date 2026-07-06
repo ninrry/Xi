@@ -60,32 +60,51 @@ class MlKitTranslator @Inject constructor(
                 .build()
 
             val translator = Translation.getClient(options)
+            var translatorClosed = false
 
             val conditions = DownloadConditions.Builder()
                 .build()
 
-            withTimeout(25_000L) {
-                suspendCancellableCoroutine { cont ->
-                    translator.downloadModelIfNeeded(conditions)
-                        .addOnSuccessListener {
-                            translator.translate(text)
-                                .addOnSuccessListener { result ->
+            try {
+                withTimeout(25_000L) {
+                    suspendCancellableCoroutine { cont ->
+                        translator.downloadModelIfNeeded(conditions)
+                            .addOnSuccessListener {
+                                translator.translate(text)
+                                    .addOnSuccessListener { result ->
+                                        if (!translatorClosed) {
+                                            translator.close()
+                                            translatorClosed = true
+                                        }
+                                        if (cont.isActive) cont.resume(Result.success(result))
+                                    }
+                                    .addOnFailureListener { e ->
+                                        if (!translatorClosed) {
+                                            translator.close()
+                                            translatorClosed = true
+                                        }
+                                        if (cont.isActive) cont.resume(Result.failure(e))
+                                    }
+                            }
+                            .addOnFailureListener { e ->
+                                if (!translatorClosed) {
                                     translator.close()
-                                    if (cont.isActive) cont.resume(Result.success(result))
+                                    translatorClosed = true
                                 }
-                                .addOnFailureListener { e ->
-                                    translator.close()
-                                    if (cont.isActive) cont.resume(Result.failure(e))
-                                }
-                        }
-                        .addOnFailureListener { e ->
-                            translator.close()
-                            if (cont.isActive) cont.resume(Result.failure(e))
-                        }
+                                if (cont.isActive) cont.resume(Result.failure(e))
+                            }
 
-                    cont.invokeOnCancellation {
-                        translator.close()
+                        cont.invokeOnCancellation {
+                            if (!translatorClosed) {
+                                translator.close()
+                                translatorClosed = true
+                            }
+                        }
                     }
+                }
+            } finally {
+                if (!translatorClosed) {
+                    translator.close()
                 }
             }
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {

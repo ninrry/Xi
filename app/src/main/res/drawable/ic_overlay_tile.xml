@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Translation QS Tile icon: "A" + "文" — same motif as AbstractIcons.Translate -->
+    <path
+        android:pathData="M5,3L5,14M5,10Q8,3 11,10M3,14L7,14"
+        android:strokeColor="#8B7355"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+
+    <path
+        android:pathData="M15,5Q19,5 19,9M19,9L19,15M19,9Q21,5 22,3M13,10L22,10M14,14L21,14"
+        android:strokeColor="#8B7355"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+</vector>

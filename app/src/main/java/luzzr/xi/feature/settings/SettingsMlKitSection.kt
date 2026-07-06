@@ -210,7 +210,7 @@ fun SettingsMlKitSection(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(36.dp)
+                            .height(44.dp)
                             .graphicsLayer {
                                 scaleX = retryScale
                                 scaleY = retryScale
@@ -267,7 +267,7 @@ fun SettingsMlKitSection(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(40.dp)
+                            .height(44.dp)
                             .graphicsLayer {
                                 scaleX = downloadScale
                                 scaleY = downloadScale

@@ -9,6 +9,6 @@ enum class TranslationEngine(
     MLKIT("mlkit", "MLKit", "Offline translation");
 
     companion object {
-        fun fromId(id: String): TranslationEngine = entries.find { it.id == id } ?: AI
+        fun fromId(id: String): TranslationEngine = entries.find { it.id == id } ?: MLKIT
     }
 }

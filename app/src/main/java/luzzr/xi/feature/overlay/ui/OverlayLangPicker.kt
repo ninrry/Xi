@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -80,13 +79,16 @@ fun LanguagePickerGrid(
                 Text(
                     text = if (isSrc) stringResource(R.string.translate_select_source) else stringResource(R.string.translate_select_target),
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Box(
                     modifier = Modifier
                         .clip(AppShape.mini)
-                        .clickable { onDismiss() }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onDismiss() }
                         .padding(4.dp)
                 ) {
                     AbstractIcons.Close(modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.secondary)
@@ -131,14 +133,14 @@ fun LanguagePickerGrid(
                                             onTargetLangChange(lang)
                                         }
                                     }
-                                    .padding(vertical = 8.dp)
+                                    .padding(horizontal = 6.dp, vertical = 8.dp)
                                     .semantics { contentDescription = lang.nativeName },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = lang.nativeName,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                                     color = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground
                                 )
                             }

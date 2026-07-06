@@ -23,7 +23,7 @@ fun SectionCard(content: @Composable () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(AppShape.card)
-            .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.card)
+            
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(16.dp)
     ) {

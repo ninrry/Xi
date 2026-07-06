@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -144,7 +143,7 @@ fun SettingsScreen(
                                 scaleX = eyeScale
                                 scaleY = eyeScale
                             }
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(AppShape.mini)
                             .clickable(interactionSource = eyeInteraction, indication = null) {
                                 apiKeyVisible = !apiKeyVisible
                             },
@@ -176,7 +175,7 @@ fun SettingsScreen(
             val modelSelectorInteraction = remember { MutableInteractionSource() }
             val isModelPressed by modelSelectorInteraction.collectIsPressedAsState()
             val modelScale by animateFloatAsState(
-                targetValue = if (isModelPressed) 0.98f else 1f,
+                targetValue = if (isModelPressed) 0.92f else 1f,
                 animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
                 label = "model_scale"
             )
@@ -404,9 +403,9 @@ fun SettingsScreen(
 
         // ====== Divider between sections ======
         HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 32.dp),
+            modifier = Modifier.padding(horizontal = 48.dp),
             color = MaterialTheme.colorScheme.outline,
-            thickness = 1.dp
+            thickness = 0.5.dp
         )
 
         // ====== ML Kit Offline Translation Section ======
@@ -417,9 +416,9 @@ fun SettingsScreen(
 
         // ====== Divider ======
         HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 32.dp),
+            modifier = Modifier.padding(horizontal = 48.dp),
             color = MaterialTheme.colorScheme.outline,
-            thickness = 1.dp
+            thickness = 0.5.dp
         )
 
         // ====== About Section ======

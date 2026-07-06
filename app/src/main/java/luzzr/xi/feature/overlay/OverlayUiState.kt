@@ -9,8 +9,9 @@ data class OverlayUiState(
     val inputText: String = "",
     val resultText: String = "",
     val isTranslating: Boolean = false,
+    val isModelDownloading: Boolean = false,
     val errorMsg: UiText? = null,
     val sourceLang: SupportedLanguage = SupportedLanguage.ENGLISH,
     val targetLang: SupportedLanguage = SupportedLanguage.CHINESE,
-    val engine: TranslationEngine = TranslationEngine.AI
+    val engine: TranslationEngine = TranslationEngine.MLKIT
 )

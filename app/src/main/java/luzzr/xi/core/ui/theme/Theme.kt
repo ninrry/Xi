@@ -3,6 +3,7 @@ package luzzr.xi.core.ui.theme
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -17,11 +18,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 
 private val LightColorScheme = lightColorScheme(
     primary = WarmAccent,
-    onPrimary = Color.White,
+    onPrimary = Ivory,
     primaryContainer = WarmAccentLight,
     onPrimaryContainer = BrownGray,
     secondary = BrownGrayLight,
-    onSecondary = Color.White,
+    onSecondary = Ivory,
     background = Ivory,
     onBackground = BrownGray,
     surface = Ivory,
@@ -70,7 +71,7 @@ fun XiTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = XiTypography,
-        shapes = XiShapes,
+        shapes = Shapes(),
         content = {
             CompositionLocalProvider(
                 LocalRippleConfiguration provides null,

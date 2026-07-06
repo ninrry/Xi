@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,7 +59,7 @@ fun CopyableHeader(title: String, content: String) {
                     scaleX = copyScale
                     scaleY = copyScale
                 }
-                .clip(RoundedCornerShape(8.dp))
+                .clip(AppShape.mini)
                 .clickable(
                     interactionSource = copyInteractionSource,
                     indication = null,
@@ -97,7 +96,7 @@ fun CorrectionTab(content: String) {
                 val lines = section.lines()
                 val title = lines.firstOrNull()?.trimEnd('-', ' ') ?: ""
                 val body = lines.drop(1).joinToString("\n").trim()
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                     Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(body, fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground, lineHeight = 18.sp)
