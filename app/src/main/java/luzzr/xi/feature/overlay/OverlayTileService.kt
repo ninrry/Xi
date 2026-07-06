@@ -47,7 +47,7 @@ class OverlayTileService : TileService() {
         } else {
             // Stop overlay
             val intent = Intent(this, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_STOP
+                action = OverlayNotificationHelper.ACTION_STOP
             }
             startService(intent)
         }
@@ -65,5 +65,7 @@ class OverlayTileService : TileService() {
         }
     }
 
-    private fun isOverlayRunning(): Boolean = OverlayService.isRunning.get()
+    private fun isOverlayRunning(): Boolean {
+        return OverlayService.isRunning.get()
+    }
 }

@@ -6,7 +6,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import io.mockk.every
 import io.mockk.mockk
-import luzzr.xi.data.api.NetworkCheck
+import luzzr.xi.core.network.NetworkCheck
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before

@@ -17,6 +17,8 @@ class TranslationCache @Inject constructor() {
             }
         }
     )
+    
+    private val lastAccessTime = ConcurrentHashMap<String, Long>()
 
     fun get(text: String, sourceLang: String, targetLang: String, model: String): String? {
         val key = key(text, sourceLang, targetLang, model)
@@ -42,10 +44,6 @@ class TranslationCache @Inject constructor() {
     }
 
     val size: Int get() = cache.size
-
-    companion object {
-        private val lastAccessTime = ConcurrentHashMap<String, Long>()
-    }
 
     private fun key(text: String, sourceLang: String, targetLang: String, model: String): String =
         "$model:$sourceLang:$targetLang:$text"

@@ -6,9 +6,9 @@ import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import luzzr.xi.data.api.NetworkCheck
-import luzzr.xi.data.local.AppSettings
-import luzzr.xi.data.local.SettingsDataStore
+import luzzr.xi.core.network.NetworkCheck
+import luzzr.xi.core.datastore.AppSettings
+import luzzr.xi.core.datastore.SettingsDataStore
 import luzzr.xi.data.repository.ApiRepository
 import luzzr.xi.domain.model.AppError
 import org.junit.After

@@ -2,6 +2,7 @@ package luzzr.xi.data.repository
 
 import android.content.Context
 import android.util.Log
+import luzzr.xi.R
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
@@ -88,7 +89,7 @@ class MlKitTranslator @Inject constructor(
                 }
             }
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-            Result.failure(Exception("模型下载或翻译超时，请检查网络连接"))
+            Result.failure(Exception(context.getString(R.string.error_mlkit_timeout)))
         } catch (e: Exception) {
             Log.e("MlKitTranslator", "Translation failed", e)
             Result.failure(e)

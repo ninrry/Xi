@@ -1,7 +1,8 @@
 package luzzr.xi
 
-import luzzr.xi.data.model.SupportedLanguage
-import luzzr.xi.service.OverlayUiState
+import luzzr.xi.domain.model.SupportedLanguage
+import luzzr.xi.domain.model.UiText
+import luzzr.xi.feature.overlay.OverlayUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -32,7 +33,7 @@ class OverlayUiStateTest {
             inputText = "hello",
             resultText = "你好",
             isTranslating = true,
-            errorMsg = "timeout",
+            errorMsg = UiText.DynamicString("timeout"),
             sourceLang = SupportedLanguage.JAPANESE,
             targetLang = SupportedLanguage.KOREAN
         )
@@ -41,11 +42,10 @@ class OverlayUiStateTest {
         assertEquals("hello", copied.inputText)
         assertEquals("你好", copied.resultText)
         assertTrue(copied.isTranslating)
-        assertEquals("timeout", copied.errorMsg)
+        assertEquals(UiText.DynamicString("timeout"), copied.errorMsg)
         assertEquals(SupportedLanguage.JAPANESE, copied.sourceLang)
         assertEquals(SupportedLanguage.KOREAN, copied.targetLang)
 
-        // original unchanged
         assertFalse(original.isPanelVisible)
         assertEquals("", original.inputText)
         assertEquals("", original.resultText)

@@ -110,7 +110,7 @@ class EssayRepository @Inject constructor(
         val depthInstruction = getDepthInstruction(reasoningEffort)
         contentParts.add(ContentPart(type = "text", text = buildMultiImagePrompt(imageUris.size, depthInstruction)))
 
-        imageUris.forEachIndexed { _, uri ->
+        imageUris.forEach { uri ->
             val base64 = uriToBase64(uri)
                 ?: return@callWithRetry Result.failure(AppError.UnknownError(Exception("Failed to read image")))
             contentParts.add(ContentPart(

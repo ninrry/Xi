@@ -1,0 +1,17 @@
+name: ai-english-tutor
+description: "LingoFlow - AI English Learning Assistant with floating translation overlay and essay correction"
+template: android
+created: 2026-07-04
+status: active
+
+technologies:
+  - kotlin
+  - jetpack-compose
+  - hilt
+  - retrofit
+  - datastore
+  - room
+
+package: com.ninrry.lingoflow
+min_sdk: 26
+target_sdk: 36

@@ -12,6 +12,21 @@ import java.util.concurrent.TimeUnit
 
 object ApiProvider {
 
+    /**
+     * Shared connection pool and dispatcher to avoid creating new ones on every config change.
+     * When the user changes API settings, we rebuild the Retrofit instance but reuse the
+     * underlying OkHttp connection pool for better connection reuse.
+     */
+    private val sharedClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .build()
+    }
+
     fun createApi(
         baseUrl: String,
         apiKey: String,
@@ -32,14 +47,12 @@ object ApiProvider {
             level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
         }
 
-        val clientBuilder = OkHttpClient.Builder()
+        val clientBuilder = sharedClient.newBuilder()
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
             .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
             .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
             .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
-            .followRedirects(true)
-            .followSslRedirects(true)
 
         // Apply proxy if configured
         if (proxyEnabled && proxyHost.isNotBlank() && proxyPort > 0) {

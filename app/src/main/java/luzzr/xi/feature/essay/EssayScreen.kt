@@ -90,6 +90,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import luzzr.xi.R
 import luzzr.xi.domain.model.ThinkingLevel
+import luzzr.xi.domain.model.UiText
 import luzzr.xi.core.ui.components.ThinkingSelector
 import luzzr.xi.core.ui.theme.AbstractIcons
 
@@ -129,7 +130,7 @@ fun EssayScreen(
             try {
                 cameraLauncher.launch(null)
             } catch (e: Exception) {
-                viewModel.onEvent(EssayUiEvent.ErrorDismissed("未找到相机应用或无法打开相机"))
+                viewModel.onEvent(EssayUiEvent.ErrorDismissed(UiText.StringResource(R.string.essay_camera_not_found)))
             }
         } else {
             showPermissionDeniedDialog = true
@@ -208,13 +209,13 @@ fun EssayScreen(
                             try {
                                 cameraLauncher.launch(null)
                             } catch (e: Exception) {
-                                viewModel.onEvent(EssayUiEvent.ErrorDismissed("未找到相机应用或无法打开相机"))
+                                viewModel.onEvent(EssayUiEvent.ErrorDismissed(UiText.StringResource(R.string.essay_camera_not_found)))
                             }
                         } else {
                             try {
                                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                             } catch (e: Exception) {
-                                viewModel.onEvent(EssayUiEvent.ErrorDismissed("无法申请相机权限"))
+                                viewModel.onEvent(EssayUiEvent.ErrorDismissed(UiText.StringResource(R.string.essay_camera_permission_denied)))
                             }
                         }
                     }
@@ -331,7 +332,7 @@ fun EssayScreen(
         // Error
         AnimatedVisibility(visible = uiState.error != null, enter = fadeIn(tween(200)) + expandVertically(tween(300)), exit = fadeOut(tween(150))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(uiState.error ?: "", color = CorrectionDelete, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                Text(uiState.error?.asString(context) ?: "", color = CorrectionDelete, fontSize = 13.sp, modifier = Modifier.weight(1f))
                 if (!isEmpty && uiState.error != null) {
                     TextButton(onClick = { viewModel.onEvent(EssayUiEvent.CorrectClicked) }) {
                         Text(stringResource(R.string.retry), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
@@ -348,7 +349,7 @@ fun EssayScreen(
         // Results
         AnimatedVisibility(visible = uiState.hasResult, enter = fadeIn(tween(300)) + slideInVertically(initialOffsetY = { it / 3 }, animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springGentle()) + expandVertically(tween(400)), exit = fadeOut(tween(200))) {
             Column(modifier = Modifier.fillMaxWidth().animateContentSize().clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant)) {
-                if (uiState.overallScore.isNotBlank() && uiState.overallScore != "未评分") {
+                if (uiState.overallScore.isNotBlank() && uiState.overallScore != stringResource(R.string.essay_not_scored)) {
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         AbstractIcons.Sparkle(Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(6.dp))

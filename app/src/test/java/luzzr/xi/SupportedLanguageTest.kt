@@ -1,6 +1,6 @@
 package luzzr.xi
 
-import luzzr.xi.data.model.SupportedLanguage
+import luzzr.xi.domain.model.SupportedLanguage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

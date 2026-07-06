@@ -1,13 +1,19 @@
 package luzzr.xi.feature.settings
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,18 +24,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -43,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -51,24 +52,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import luzzr.xi.R
-import luzzr.xi.data.repository.ModelDownloadState
-import luzzr.xi.core.ui.theme.CorrectionAdd
-import luzzr.xi.core.ui.theme.AppShape
-import luzzr.xi.core.ui.theme.CorrectionDelete
-import luzzr.xi.feature.settings.SettingsViewModel
-import luzzr.xi.feature.settings.SettingsUiEvent
-import luzzr.xi.feature.settings.TestStatus
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.graphicsLayer
 import luzzr.xi.core.ui.theme.AbstractIcons
+import luzzr.xi.core.ui.theme.AppShape
+import luzzr.xi.core.ui.theme.CorrectionAdd
+import luzzr.xi.core.ui.theme.CorrectionDelete
+import luzzr.xi.feature.settings.SettingsUiEvent
+import luzzr.xi.feature.settings.SettingsViewModel
+import luzzr.xi.feature.settings.TestStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -420,257 +410,10 @@ fun SettingsScreen(
         )
 
         // ====== ML Kit Offline Translation Section ======
-        SectionCard {
-            SectionTitle("极速翻译")
-            Text(
-                "使用 Google 本地翻译引擎，模型首次使用时自动下载（约几十MB），之后离线可用。",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            val downloadState = uiState.mlKitDownloadState
-            when (downloadState) {
-                ModelDownloadState.COMPLETED -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        AbstractIcons.CheckCircle(tint = CorrectionAdd, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "离线翻译模型已就绪",
-                            fontSize = 13.sp,
-                            color = CorrectionAdd,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-                ModelDownloadState.DOWNLOADING -> {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                "下载中…",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Smooth animated progress bar
-                        val animatedProgress by animateFloatAsState(
-                            targetValue = uiState.mlKitDownloadProgress,
-                            animationSpec = tween(durationMillis = 200),
-                            label = "download_progress"
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(MaterialTheme.colorScheme.primary)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "${(uiState.mlKitDownloadProgress * 100).toInt()}%",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-
-                            // Cancel button
-                            val cancelInteraction = remember { MutableInteractionSource() }
-                            val isCancelPressed by cancelInteraction.collectIsPressedAsState()
-                            val cancelScale by animateFloatAsState(
-                                targetValue = if (isCancelPressed) 0.90f else 1f,
-                                animationSpec = spring(),
-                                label = "cancel_scale"
-                            )
-
-                            Box(
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        scaleX = cancelScale
-                                        scaleY = cancelScale
-                                    }
-                                    .clip(AppShape.small)
-                                    .border(
-                                        0.5.dp,
-                                        CorrectionDelete.copy(alpha = 0.5f),
-                                        AppShape.small
-                                    )
-                                    .clickable(
-                                        interactionSource = cancelInteraction,
-                                        indication = null
-                                    ) {
-                                        viewModel.onEvent(SettingsUiEvent.CancelMlKitDownloadClicked)
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    AbstractIcons.Stop(
-                                        modifier = Modifier.size(12.dp),
-                                        tint = CorrectionDelete
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        "取消",
-                                        fontSize = 11.sp,
-                                        color = CorrectionDelete
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-                ModelDownloadState.FAILED -> {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            AbstractIcons.ErrorExclamation(
-                                tint = CorrectionDelete,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    "下载失败",
-                                    fontSize = 13.sp,
-                                    color = CorrectionDelete,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                if (uiState.mlKitDownloadMessage.isNotBlank()) {
-                                    Text(
-                                        uiState.mlKitDownloadMessage,
-                                        fontSize = 12.sp,
-                                        color = CorrectionDelete.copy(alpha = 0.7f)
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Retry button
-                        val retryInteraction = remember { MutableInteractionSource() }
-                        val isRetryPressed by retryInteraction.collectIsPressedAsState()
-                        val retryScale by animateFloatAsState(
-                            targetValue = if (isRetryPressed) 0.95f else 1f,
-                            animationSpec = spring(),
-                            label = "retry_scale"
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(36.dp)
-                                .graphicsLayer {
-                                    scaleX = retryScale
-                                    scaleY = retryScale
-                                }
-                                .clip(AppShape.button)
-                                .border(
-                                    0.5.dp,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                    AppShape.button
-                                )
-                                .clickable(
-                                    interactionSource = retryInteraction,
-                                    indication = null
-                                ) {
-                                    viewModel.onEvent(SettingsUiEvent.RetryMlKitDownloadClicked)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                AbstractIcons.Refresh(
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    "重试下载",
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-                }
-                else -> {
-                    // Idle state - show download button
-                    val downloadInteraction = remember { MutableInteractionSource() }
-                    val isDownloadPressed by downloadInteraction.collectIsPressedAsState()
-                    val downloadScale by animateFloatAsState(
-                        targetValue = if (isDownloadPressed) 0.95f else 1f,
-                        animationSpec = spring(),
-                        label = "download_scale"
-                    )
-
-                    Column {
-                        Text(
-                            "点击下方按钮下载离线翻译模型，首次下载约需几MB流量。",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(40.dp)
-                                .graphicsLayer {
-                                    scaleX = downloadScale
-                                    scaleY = downloadScale
-                                }
-                                .clip(AppShape.button)
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable(
-                                    interactionSource = downloadInteraction,
-                                    indication = null
-                                ) {
-                                    viewModel.onEvent(SettingsUiEvent.DownloadMlKitModelClicked)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                AbstractIcons.Download(
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.background
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "下载离线模型",
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.background,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        SettingsMlKitSection(
+            uiState = uiState,
+            onEvent = { viewModel.onEvent(it) }
+        )
 
         // ====== Divider ======
         HorizontalDivider(
@@ -680,52 +423,11 @@ fun SettingsScreen(
         )
 
         // ====== About Section ======
-        SectionCard {
-            SectionTitle(stringResource(R.string.settings_section_about))
-            Text(
-                stringResource(R.string.settings_version),
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                stringResource(R.string.settings_desc),
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                stringResource(R.string.settings_default_model_info),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
-            )
-        }
+        SettingsAboutSection()
 
         // Bottom spacing for scroll comfort
         Spacer(modifier = Modifier.height(120.dp))
     }
 }
 
-@Composable
-private fun SectionCard(content: @Composable () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(AppShape.card)
-            .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.card)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(16.dp)
-    ) {
-        content()
-    }
-}
 
-@Composable
-private fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        fontSize = 15.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onBackground
-    )
-    Spacer(modifier = Modifier.height(12.dp))
-}

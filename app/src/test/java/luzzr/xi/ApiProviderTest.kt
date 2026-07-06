@@ -3,8 +3,8 @@ package luzzr.xi
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import luzzr.xi.data.api.ApiProvider
-import luzzr.xi.data.api.OpenAiApi
+import luzzr.xi.core.network.ApiProvider
+import luzzr.xi.core.network.OpenAiApi
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -127,7 +127,11 @@ class ApiProviderTest {
         assertEquals(Proxy.Type.HTTP, proxy!!.type())
         // InetSocketAddress address
         val address = proxy.address() as java.net.InetSocketAddress
-        assertEquals("127.0.0.1", address.hostName)
+        // InetSocketAddress may resolve 127.0.0.1 to localhost
+        assertTrue(
+            "Proxy host should be 127.0.0.1 or localhost",
+            address.hostName == "127.0.0.1" || address.hostName == "localhost"
+        )
         assertEquals(8080, address.port)
     }
 

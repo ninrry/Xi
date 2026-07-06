@@ -1,8 +1,9 @@
 package luzzr.xi
 
-import luzzr.xi.data.model.SupportedLanguage
-import luzzr.xi.service.OverlayService
-import luzzr.xi.service.OverlayUiState
+import luzzr.xi.domain.model.SupportedLanguage
+import luzzr.xi.domain.model.UiText
+import luzzr.xi.feature.overlay.OverlayService
+import luzzr.xi.feature.overlay.OverlayUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -10,17 +11,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Tests OverlayService data/state logic.
- * The Service itself is tightly coupled to Android framework,
- * so we test OverlayUiState data class, the isRunning atomic boolean,
- * and the pure logic behind swap/doTranslate transformations.
- */
 class OverlayServiceTest {
 
     @Before
     fun setUp() {
-        // Reset the static atomic before each test
         OverlayService.isRunning.set(false)
     }
 
@@ -46,7 +40,7 @@ class OverlayServiceTest {
             inputText = "hello",
             resultText = "你好",
             isTranslating = true,
-            errorMsg = "timeout",
+            errorMsg = UiText.DynamicString("timeout"),
             sourceLang = SupportedLanguage.JAPANESE,
             targetLang = SupportedLanguage.KOREAN
         )
@@ -55,11 +49,10 @@ class OverlayServiceTest {
         assertEquals("hello", copied.inputText)
         assertEquals("你好", copied.resultText)
         assertTrue(copied.isTranslating)
-        assertEquals("timeout", copied.errorMsg)
+        assertEquals(UiText.DynamicString("timeout"), copied.errorMsg)
         assertEquals(SupportedLanguage.JAPANESE, copied.sourceLang)
         assertEquals(SupportedLanguage.KOREAN, copied.targetLang)
 
-        // original unchanged
         assertFalse(original.isPanelVisible)
         assertEquals("", original.inputText)
         assertNull(original.errorMsg)
@@ -86,7 +79,6 @@ class OverlayServiceTest {
             targetLang = SupportedLanguage.CHINESE
         )
 
-        // Mirror the swap logic from OverlayService.swapOverlayLanguages()
         val swapped = state.copy(
             sourceLang = state.targetLang,
             targetLang = state.sourceLang,
@@ -122,30 +114,28 @@ class OverlayServiceTest {
     fun doTranslateLogic_withEmptyInput_setsErrorMessage() {
         val state = OverlayUiState(inputText = "   ")
 
-        // Mirror the guard clause from OverlayService.doTranslate()
         val trimmed = state.inputText.trim()
         val result = if (trimmed.isEmpty()) {
-            state.copy(errorMsg = "Input text cannot be empty")
+            state.copy(errorMsg = UiText.DynamicString("Input text cannot be empty"))
         } else {
             state
         }
 
-        assertEquals("Input text cannot be empty", result.errorMsg)
+        assertEquals(UiText.DynamicString("Input text cannot be empty"), result.errorMsg)
     }
 
     @Test
     fun doTranslateLogic_withValidInput_clearsError() {
         val state = OverlayUiState(
             inputText = "hello",
-            errorMsg = "previous error"
+            errorMsg = UiText.DynamicString("previous error")
         )
 
-        // Mirror the logic from OverlayService.doTranslate() when input is valid
         val trimmed = state.inputText.trim()
         val result = if (trimmed.isNotEmpty()) {
             state.copy(isTranslating = true, errorMsg = null, resultText = "")
         } else {
-            state.copy(errorMsg = "Input text cannot be empty")
+            state.copy(errorMsg = UiText.DynamicString("Input text cannot be empty"))
         }
 
         assertNull(result.errorMsg)

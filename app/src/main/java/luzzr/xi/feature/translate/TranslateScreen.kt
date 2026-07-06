@@ -7,14 +7,10 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -28,9 +24,6 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,29 +33,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,7 +54,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -86,22 +66,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import luzzr.xi.R
-import luzzr.xi.domain.model.SupportedLanguage
-import luzzr.xi.domain.model.ThinkingLevel
-import luzzr.xi.feature.overlay.OverlayService
+import luzzr.xi.domain.model.UiText
 import luzzr.xi.core.ui.components.ThinkingSelector
 import luzzr.xi.core.ui.components.EngineSelector
 import luzzr.xi.core.ui.theme.AbstractIcons
-
 import luzzr.xi.core.ui.theme.AppShape
-import luzzr.xi.core.ui.theme.CorrectionAdd
 import luzzr.xi.core.ui.theme.CorrectionDelete
-import luzzr.xi.feature.translate.TranslateViewModel
-import luzzr.xi.feature.translate.TranslateUiEvent
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import luzzr.xi.feature.overlay.OverlayService
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TranslateScreen(
     viewModel: TranslateViewModel = hiltViewModel()
@@ -247,7 +220,7 @@ fun TranslateScreen(
         // Error
         AnimatedVisibility(visible = uiState.error != null, enter = fadeIn(tween(200)) + expandVertically(tween(300)), exit = fadeOut(tween(150)) + shrinkVertically(tween(200))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(uiState.error ?: "", color = CorrectionDelete, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                Text(uiState.error?.asString(context) ?: "", color = CorrectionDelete, fontSize = 13.sp, modifier = Modifier.weight(1f))
                 if (uiState.inputText.isNotBlank() && uiState.error != null) {
                     TextButton(onClick = { viewModel.onEvent(TranslateUiEvent.TranslateClicked) }) {
                         Text(stringResource(R.string.retry), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
@@ -307,150 +280,6 @@ private fun ClearButton(onClick: () -> Unit) {
             modifier = Modifier.size(18.dp).semantics { contentDescription = clearDesc },
             tint = MaterialTheme.colorScheme.secondary
         )
-    }
-}
-
-@Composable
-private fun ResultCard(resultText: String, onCopy: () -> Unit) {
-    var copied by remember { mutableStateOf(false) }
-    val checkScale by animateFloatAsState(
-        targetValue = if (copied) 1.2f else 1f,
-        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springGentle(),
-        label = "check_scale"
-    )
-    val copyInteractionSource = remember { MutableInteractionSource() }
-    val isCopyPressed by copyInteractionSource.collectIsPressedAsState()
-    val copyScale by animateFloatAsState(
-        targetValue = if (isCopyPressed) 0.90f else 1f,
-        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-        label = "copy_scale"
-    )
-
-    Column(modifier = Modifier.fillMaxWidth().animateContentSize().clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).padding(14.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.translate_result_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .scale(copyScale)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(
-                        interactionSource = copyInteractionSource,
-                        indication = null,
-                        onClick = { onCopy(); copied = true }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (copied) {
-                    AbstractIcons.CheckCircle(
-                        Modifier.size(16.dp).graphicsLayer {
-                            scaleX = checkScale; scaleY = checkScale
-                        },
-                        tint = CorrectionAdd
-                    )
-                } else {
-                val copyDesc = stringResource(R.string.translate_copy)
-                AbstractIcons.Copy(
-                    Modifier.size(16.dp).semantics { contentDescription = copyDesc },
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-    Spacer(modifier = Modifier.height(6.dp))
-        Text(resultText, fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground, lineHeight = 22.sp)
-    }
-    androidx.compose.runtime.LaunchedEffect(copied) {
-        if (copied) {
-            kotlinx.coroutines.delay(1500)
-            copied = false
-        }
-    }
-}
-
-@Composable
-private fun LanguageSelector(language: SupportedLanguage, onClick: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.90f else 1f,
-        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-        label = "lang_scale"
-    )
-    Row(
-        modifier = Modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .clip(AppShape.small)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(language.nativeName, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium, fontSize = 13.sp)
-        Spacer(modifier = Modifier.width(4.dp))
-        AbstractIcons.ArrowDropDown(modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LanguagePickerSheet(title: String, currentLang: SupportedLanguage, excludeLang: SupportedLanguage, onSelect: (SupportedLanguage) -> Unit, onDismiss: () -> Unit) {
-    val sheetState = rememberModalBottomSheetState()
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Spacer(modifier = Modifier.height(12.dp))
-            val languages = SupportedLanguage.entries.filter { it != excludeLang }
-            val rows = languages.chunked(2)
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (rowItems in rows) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        for (lang in rowItems) {
-                            val isSelected = lang == currentLang
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val isPressed by interactionSource.collectIsPressedAsState()
-                            val itemScale by animateFloatAsState(
-                                targetValue = if (isPressed) 0.90f else 1f,
-                                animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                                label = "item_scale"
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .graphicsLayer {
-                                        scaleX = itemScale
-                                        scaleY = itemScale
-                                    }
-                                    .clip(AppShape.small)
-                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable(interactionSource = interactionSource, indication = null) { onSelect(lang) }
-                                    .padding(horizontal = 14.dp, vertical = 12.dp)
-                                    .semantics { contentDescription = lang.nativeName }
-                            ) {
-                                Column {
-                                    Text(lang.nativeName, fontSize = 14.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground)
-                                    Text(lang.displayName, fontSize = 11.sp, color = if (isSelected) MaterialTheme.colorScheme.background.copy(alpha = 0.7f) else MaterialTheme.colorScheme.secondary)
-                                }
-                            }
-                        }
-                        val emptySlots = 2 - rowItems.size
-                        if (emptySlots > 0) {
-                            Spacer(modifier = Modifier.weight(emptySlots.toFloat()))
-                        }
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
     }
 }
 

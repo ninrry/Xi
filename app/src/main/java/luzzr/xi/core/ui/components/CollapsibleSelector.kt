@@ -35,6 +35,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import luzzr.xi.R
 import luzzr.xi.core.ui.theme.AbstractIcons
 import luzzr.xi.core.ui.theme.AppShape
 
@@ -50,6 +53,7 @@ fun <T> CollapsibleSelector(
     modifier: Modifier = Modifier
 ) {
     var showOptions by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val arrowRotation by animateFloatAsState(
         targetValue = if (showOptions) 180f else 0f,
         animationSpec = spring(stiffness = 300f),
@@ -85,7 +89,7 @@ fun <T> CollapsibleSelector(
                     modifier = Modifier
                         .size(16.dp)
                         .graphicsLayer { rotationZ = arrowRotation }
-                        .semantics { contentDescription = if (showOptions) "收起选项" else "展开选项" },
+                        .semantics { contentDescription = if (showOptions) context.getString(R.string.semantics_collapse_options) else context.getString(R.string.semantics_expand_options) },
                     tint = MaterialTheme.colorScheme.primary
                 )
             }

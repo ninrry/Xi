@@ -7,9 +7,8 @@
 }
 
 # Gson
--keepattributes Signature
 -keep class com.google.gson.** { *; }
--keep class luzzr.xi.data.model.** { *; }
+-keep class luzzr.xi.domain.model.** { *; }
 
 # ML Kit Translation
 -keep class com.google.mlkit.** { *; }

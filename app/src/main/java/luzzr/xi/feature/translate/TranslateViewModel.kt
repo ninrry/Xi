@@ -6,6 +6,7 @@ import luzzr.xi.core.datastore.SettingsDataStore
 import luzzr.xi.domain.model.SupportedLanguage
 import luzzr.xi.domain.model.ThinkingLevel
 import luzzr.xi.domain.model.TranslationEngine
+import luzzr.xi.domain.model.UiText
 import luzzr.xi.domain.usecase.TranslateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,17 +14,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
-import dagger.hilt.android.qualifiers.ApplicationContext
-import android.content.Context
-import luzzr.xi.R
 
 data class TranslateUiState(
     val inputText: String = "",
     val resultText: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val sourceLang: SupportedLanguage = SupportedLanguage.ENGLISH,
     val targetLang: SupportedLanguage = SupportedLanguage.CHINESE,
     val thinkingLevel: ThinkingLevel = ThinkingLevel.LOW,
@@ -45,7 +42,6 @@ sealed interface TranslateUiEvent {
 class TranslateViewModel @Inject constructor(
     private val translateUseCase: TranslateUseCase,
     private val settingsDataStore: SettingsDataStore,
-    @ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(TranslateUiState())
     val uiState: StateFlow<TranslateUiState> = _uiState.asStateFlow()
@@ -109,7 +105,7 @@ class TranslateViewModel @Inject constructor(
     private fun translate() {
         val text = _uiState.value.inputText.trim()
         if (text.isEmpty()) {
-            _uiState.value = _uiState.value.copy(error = context.getString(R.string.translate_error_empty))
+            _uiState.value = _uiState.value.copy(error = UiText.StringResource(luzzr.xi.R.string.translate_error_empty))
             return
         }
 
@@ -138,19 +134,23 @@ class TranslateViewModel @Inject constructor(
                         )
                     },
                     onFailure = { e ->
-                        val errorMsg = e.message ?: context.getString(R.string.error_translate_failed)
+                        val errorText = e.message?.let { UiText.DynamicString(it) }
+                            ?: UiText.StringResource(luzzr.xi.R.string.error_translate_failed)
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = errorMsg
+                            error = errorText
                         )
                     }
                 )
             } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                val errorMsg = context.getString(R.string.error_translate_timeout)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = errorMsg
+                    error = UiText.StringResource(luzzr.xi.R.string.error_translate_timeout)
                 )
+            } finally {
+                if (_uiState.value.isLoading) {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
             }
         }
     }

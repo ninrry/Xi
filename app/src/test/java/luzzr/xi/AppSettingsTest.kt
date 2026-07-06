@@ -1,6 +1,6 @@
 package luzzr.xi
 
-import luzzr.xi.data.local.AppSettings
+import luzzr.xi.core.datastore.AppSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test

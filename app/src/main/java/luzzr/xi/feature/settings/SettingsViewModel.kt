@@ -7,6 +7,8 @@ import luzzr.xi.core.network.ApiProvider
 import luzzr.xi.core.datastore.AppSettings
 import luzzr.xi.core.datastore.SettingsDataStore
 import luzzr.xi.domain.model.SupportedLanguage
+import luzzr.xi.domain.model.UiText
+import luzzr.xi.data.repository.ApiRepositoryImpl
 import luzzr.xi.data.repository.ModelDownloadProgress
 import luzzr.xi.data.repository.ModelDownloadState
 import luzzr.xi.data.repository.MlKitModelManager
@@ -23,7 +25,7 @@ data class SettingsUiState(
     val testStatus: TestStatus = TestStatus.Idle,
     val availableModels: List<String> = emptyList(),
     val mlKitDownloadState: ModelDownloadState = ModelDownloadState.IDLE,
-    val mlKitDownloadMessage: String = "",
+    val mlKitDownloadMessage: UiText? = null,
     val mlKitDownloadProgress: Float = 0f,
     val mlKitDownloading: Boolean = false
 )
@@ -48,7 +50,8 @@ sealed interface SettingsUiEvent {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
-    private val mlKitModelManager: MlKitModelManager
+    private val mlKitModelManager: MlKitModelManager,
+    private val apiRepository: ApiRepositoryImpl,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -79,12 +82,13 @@ class SettingsViewModel @Inject constructor(
                     mlKitDownloadState = state,
                     mlKitDownloadProgress = progress.progress,
                     mlKitDownloading = state == ModelDownloadState.DOWNLOADING,
-                    mlKitDownloadMessage = progress.message.ifBlank {
+                    mlKitDownloadMessage = run {
+                        if (progress.message.isNotBlank()) return@run UiText.DynamicString(progress.message)
                         when (state) {
-                            ModelDownloadState.COMPLETED -> "离线翻译模型已就绪"
-                            ModelDownloadState.DOWNLOADING -> "下载中…"
-                            ModelDownloadState.FAILED -> "下载失败"
-                            ModelDownloadState.IDLE -> ""
+                            ModelDownloadState.COMPLETED -> UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready)
+                            ModelDownloadState.DOWNLOADING -> UiText.StringResource(luzzr.xi.R.string.mlkit_downloading)
+                            ModelDownloadState.FAILED -> UiText.StringResource(luzzr.xi.R.string.mlkit_download_failed)
+                            ModelDownloadState.IDLE -> null
                         }
                     }
                 )
@@ -122,14 +126,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(testStatus = TestStatus.Testing)
             try {
-                val s = settingsDataStore.settings.first()
-                val api = ApiProvider.createApi(
-                    baseUrl = s.apiBaseUrl,
-                    apiKey = s.apiKey,
-                    proxyEnabled = s.proxyEnabled,
-                    proxyHost = s.proxyHost,
-                    proxyPort = s.proxyPort
-                )
+                val api = apiRepository.getCurrentApi()
                 val response = api.listModels()
                 val models = response.data?.mapNotNull { it.id } ?: emptyList()
                 _uiState.value = _uiState.value.copy(
@@ -150,7 +147,7 @@ class SettingsViewModel @Inject constructor(
                 mlKitDownloading = true,
                 mlKitDownloadState = ModelDownloadState.DOWNLOADING,
                 mlKitDownloadProgress = 0f,
-                mlKitDownloadMessage = "准备下载…"
+                mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_prepare_download)
             )
 
             val result = mlKitModelManager.downloadModel(
@@ -166,14 +163,15 @@ class SettingsViewModel @Inject constructor(
                         mlKitDownloading = false,
                         mlKitDownloadState = ModelDownloadState.COMPLETED,
                         mlKitDownloadProgress = 1f,
-                        mlKitDownloadMessage = "离线翻译模型已就绪"
+                        mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_download_success)
                     )
                 },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(
                         mlKitDownloading = false,
                         mlKitDownloadState = ModelDownloadState.FAILED,
-                        mlKitDownloadMessage = e.message ?: "下载失败，请重试"
+                        mlKitDownloadMessage = e.message?.let { UiText.DynamicString(it) }
+                            ?: UiText.StringResource(luzzr.xi.R.string.mlkit_download_retry)
                     )
                 }
             )
@@ -186,7 +184,7 @@ class SettingsViewModel @Inject constructor(
             mlKitDownloading = false,
             mlKitDownloadState = ModelDownloadState.IDLE,
             mlKitDownloadProgress = 0f,
-            mlKitDownloadMessage = "下载已取消"
+            mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_download_cancelled)
         )
     }
 
@@ -195,7 +193,7 @@ class SettingsViewModel @Inject constructor(
             mlKitDownloading = false,
             mlKitDownloadState = ModelDownloadState.IDLE,
             mlKitDownloadProgress = 0f,
-            mlKitDownloadMessage = ""
+            mlKitDownloadMessage = null
         )
         downloadMlKitModel()
     }
@@ -207,7 +205,7 @@ class SettingsViewModel @Inject constructor(
                 mlKitDownloadState = if (enZh) ModelDownloadState.COMPLETED else ModelDownloadState.IDLE,
                 mlKitDownloading = false,
                 mlKitDownloadProgress = if (enZh) 1f else 0f,
-                mlKitDownloadMessage = if (enZh) "离线翻译模型已就绪" else ""
+                mlKitDownloadMessage = if (enZh) UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready) else null
             )
         }
     }

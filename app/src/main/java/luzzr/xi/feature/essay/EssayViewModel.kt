@@ -1,13 +1,14 @@
 package luzzr.xi.feature.essay
 
 import android.net.Uri
-import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import luzzr.xi.domain.model.ThinkingLevel
+import luzzr.xi.domain.model.UiText
 import luzzr.xi.data.repository.CorrectionResult
 import luzzr.xi.domain.usecase.CorrectEssayUseCase
 import luzzr.xi.core.datastore.SettingsDataStore
+import luzzr.xi.domain.model.EssayError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,9 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import dagger.hilt.android.qualifiers.ApplicationContext
-import android.content.Context
-import luzzr.xi.R
 
 enum class InputMode { TEXT, IMAGE, PDF }
 
@@ -28,7 +26,7 @@ data class EssayUiState(
     val overallScore: String = "",
     val writingTips: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val hasResult: Boolean = false,
     val inputMode: InputMode = InputMode.TEXT,
     val imageUri: Uri? = null,
@@ -44,7 +42,7 @@ sealed interface EssayUiEvent {
     data class PdfUriSelected(val uri: Uri) : EssayUiEvent
     data object CorrectClicked : EssayUiEvent
     data object ClearClicked : EssayUiEvent
-    data class ErrorDismissed(val error: String? = null) : EssayUiEvent
+    data class ErrorDismissed(val error: UiText? = null) : EssayUiEvent
     data class ThinkingLevelChanged(val level: ThinkingLevel) : EssayUiEvent
 }
 
@@ -52,7 +50,6 @@ sealed interface EssayUiEvent {
 class EssayViewModel @Inject constructor(
     private val correctEssayUseCase: CorrectEssayUseCase,
     private val settingsDataStore: SettingsDataStore,
-    @ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EssayUiState())
     val uiState: StateFlow<EssayUiState> = _uiState.asStateFlow()
@@ -85,7 +82,7 @@ class EssayViewModel @Inject constructor(
             is EssayUiEvent.PdfUriSelected -> {
                 _uiState.value = _uiState.value.copy(
                     imageUri = event.uri,
-                    pdfPageCount = 1, // Will handle correct count inside if needed, simpler logic
+                    pdfPageCount = 1,
                     pdfCurrentPage = 0,
                     inputMode = InputMode.PDF
                 )
@@ -133,17 +130,14 @@ class EssayViewModel @Inject constructor(
                         )
                     },
                     onFailure = { e ->
-                        val msg = e.message
-                        val errorMsg = when (msg) {
-                            "TEXT_EMPTY" -> context.getString(R.string.essay_error_empty)
-                            "IMAGE_NULL" -> context.getString(R.string.essay_error_no_image)
-                            "PDF_NULL" -> context.getString(R.string.essay_error_no_pdf)
-                            "PDF_UNREADABLE" -> context.getString(R.string.error_ai_unreadable_image)
-                            else -> context.getString(R.string.error_essay_failed)
+                        val errorText = when (e) {
+                            is EssayError.TextEmpty -> UiText.StringResource(luzzr.xi.R.string.essay_error_empty)
+                            is EssayError.ImageNull -> UiText.StringResource(luzzr.xi.R.string.essay_error_no_image)
+                            is EssayError.PdfNull -> UiText.StringResource(luzzr.xi.R.string.essay_error_no_pdf)
+                            is EssayError.PdfUnreadable -> UiText.StringResource(luzzr.xi.R.string.error_ai_unreadable_image)
+                            else -> UiText.StringResource(luzzr.xi.R.string.error_essay_failed)
                         }
-                        _uiState.value = _uiState.value.copy(
-                            error = errorMsg
-                        )
+                        _uiState.value = _uiState.value.copy(error = errorText)
                     }
                 )
             } finally {

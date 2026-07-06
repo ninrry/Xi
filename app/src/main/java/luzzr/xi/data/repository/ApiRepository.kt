@@ -18,12 +18,12 @@ abstract class ApiRepository(
     protected val context: Context,
     protected val settingsDataStore: SettingsDataStore
 ) {
-    private var api: OpenAiApi? = null
-    private var cachedBaseUrl: String? = null
-    private var cachedApiKey: String = ""
-    private var cachedProxyEnabled: Boolean = false
-    private var cachedProxyHost: String = ""
-    private var cachedProxyPort: Int = 0
+    @Volatile private var api: OpenAiApi? = null
+    @Volatile private var cachedBaseUrl: String? = null
+    @Volatile private var cachedApiKey: String = ""
+    @Volatile private var cachedProxyEnabled: Boolean = false
+    @Volatile private var cachedProxyHost: String = ""
+    @Volatile private var cachedProxyPort: Int = 0
 
     protected suspend fun getApi(): OpenAiApi {
         val s = settingsDataStore.settings.first()

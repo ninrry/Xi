@@ -7,9 +7,9 @@ enum class ThinkingLevel(
     val displayName: String,
     val description: String
 ) {
-    LOW("low", "轻度", "简单推理"),
-    MEDIUM("medium", "中等", "适中思考"),
-    HIGH("high", "深度", "深度分析");
+    LOW("low", "Low", "Simple reasoning"),
+    MEDIUM("medium", "Medium", "Moderate thinking"),
+    HIGH("high", "Deep", "Deep analysis");
 
     companion object {
         fun fromId(id: String): ThinkingLevel = entries.find { it.id == id } ?: MEDIUM

@@ -8,8 +8,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import luzzr.xi.data.local.AppSettings
-import luzzr.xi.data.local.SettingsDataStore
+import luzzr.xi.core.datastore.AppSettings
+import luzzr.xi.core.datastore.SettingsDataStore
 import org.junit.*
 import org.junit.Assert.*
 
@@ -36,7 +36,7 @@ class SettingsDataStoreTest {
         assertEquals("", settings.proxyHost)
         assertEquals(0, settings.proxyPort)
         assertFalse(settings.overlayEnabled)
-        assertEquals("low", settings.translateThinkingLevel)
+        assertEquals("medium", settings.translateThinkingLevel)
         assertEquals("high", settings.essayThinkingLevel)
     }
 }
