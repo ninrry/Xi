@@ -9,12 +9,12 @@
 -keep class luzzr.xi.domain.model.CorrectionResult { *; }
 -keep class luzzr.xi.data.cache.** { *; }
 
-# ML Kit — only keep what's accessed
+# ML Kit — keep all classes accessed by the app
 -dontwarn com.google.mlkit.**
--keep class com.google.mlkit.translate.Translator { *; }
--keep class com.google.mlkit.translate.TranslatorOptions { *; }
--keep class com.google.mlkit.translate.TranslateLanguage { *; }
--keep class com.google.mlkit.common.modeldownload.RemoteModelManager { *; }
+-dontwarn com.google.android.gms.internal.mlkit_**
+-keep class com.google.mlkit.nl.translate.** { *; }
+-keep class com.google.mlkit.common.model.** { *; }
+-keep class com.google.mlkit.common.** { *; }
 
 # Hilt — allow obfuscation of internal classes
 -dontwarn dagger.hilt.**

@@ -81,6 +81,7 @@ export ANDROID_HOME=/path/to/android-sdk
 
 ## 版本历史
 
+- **v1.1.2** (2026-07-07) — 修复 Release 构建下点击设置崩溃（ProGuard ML Kit 包名错误 + isModelDownloaded 异常未捕获）
 - **v1.1.1** (2026-07-07) — 修复 ApiProvider 重复 sharedClient 导致设置界面崩溃的编译错误
 - **v1.1.0** (2026-07-07) — AI 供应商模块（小米 MiMo/OpenCode Go/自定义）、85 项审查修复、流式翻译可靠性重构
 - **v1.0.1** (2026-07-06) — ML Kit 模型下载进度指示、强制分离架构打包（arm64/x86_64）、协程作用域泄漏修复、状态原子更新修复、屏幕旋转处理
@@ -90,6 +91,7 @@ export ANDROID_HOME=/path/to/android-sdk
 
 | 版本 | 日期 | arm64 (真机) | x86_64 (模拟器) |
 |------|------|-------------|----------------|
+| v1.1.2 | 2026-07-07 | [Xi_v1.1.2_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.2/Xi_v1.1.2_arm64.apk) | [Xi_v1.1.2_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.2/Xi_v1.1.2_x86_64.apk) |
 | v1.1.1 | 2026-07-07 | [Xi_v1.1.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.1/Xi_v1.1.1_arm64.apk) | [Xi_v1.1.1_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.1/Xi_v1.1.1_x86_64.apk) |
 | v1.1.0 | 2026-07-07 | [Xi_v1.1.0_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.0/Xi_v1.1.0_arm64.apk) | [Xi_v1.1.0_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.0/Xi_v1.1.0_x86_64.apk) |
 | v1.0.1 | 2026-07-06 | [Xi_v1.0.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.0.1/Xi_v1.0.1_arm64.apk) | [Xi_v1.0.1_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.0.1/Xi_v1.0.1_x86_64.apk) |

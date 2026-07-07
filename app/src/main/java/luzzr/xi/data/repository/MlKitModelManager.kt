@@ -66,12 +66,12 @@ class MlKitModelManager @Inject constructor() {
         sourceCode: String,
         targetCode: String
     ): Boolean = withContext(Dispatchers.IO) {
-        val modelKey = key(sourceLang, targetLang)
-        if (downloadStates[modelKey] == ModelDownloadState.COMPLETED) {
-            return@withContext true
-        }
-        val modelManager = RemoteModelManager.getInstance()
         try {
+            val modelKey = key(sourceLang, targetLang)
+            if (downloadStates[modelKey] == ModelDownloadState.COMPLETED) {
+                return@withContext true
+            }
+            val modelManager = RemoteModelManager.getInstance()
             val sCode = convertCode(sourceCode)
             val tCode = convertCode(targetCode)
 
