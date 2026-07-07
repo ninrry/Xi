@@ -1,50 +1,54 @@
 package luzzr.xi.data.cache
 
 import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
+import luzzr.xi.domain.model.TranslationResult
 
 @Singleton
 class TranslationCache @Inject constructor() {
 
     private val maxEntries = 50
+    private val ttlMs = 3600_000L
+
+    private data class CacheEntry(val result: TranslationResult, val lastAccess: Long)
 
     private val cache = Collections.synchronizedMap(
-        object : LinkedHashMap<String, String>(16, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>): Boolean {
+        object : LinkedHashMap<String, CacheEntry>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CacheEntry>): Boolean {
                 return size > maxEntries
             }
         }
     )
-    
-    private val lastAccessTime = ConcurrentHashMap<String, Long>()
 
-    fun get(text: String, sourceLang: String, targetLang: String, model: String): String? {
-        val key = key(text, sourceLang, targetLang, model)
-        val lastAccess = lastAccessTime[key] ?: return null
-        if (System.currentTimeMillis() - lastAccess > 3600_000L) {
-            cache.remove(key)
-            lastAccessTime.remove(key)
-            return null
+    fun get(text: String, sourceLang: String, targetLang: String, model: String, providerId: String): TranslationResult? {
+        val key = key(text, sourceLang, targetLang, model, providerId)
+        synchronized(cache) {
+            val entry = cache[key] ?: return null
+            if (System.currentTimeMillis() - entry.lastAccess > ttlMs) {
+                cache.remove(key)
+                return null
+            }
+            cache[key] = entry.copy(lastAccess = System.currentTimeMillis())
+            return entry.result
         }
-        lastAccessTime[key] = System.currentTimeMillis()
-        return cache[key]
     }
 
-    fun put(text: String, sourceLang: String, targetLang: String, model: String, translation: String) {
-        val key = key(text, sourceLang, targetLang, model)
-        cache[key] = translation
-        lastAccessTime[key] = System.currentTimeMillis()
+    fun put(text: String, sourceLang: String, targetLang: String, model: String, providerId: String, translation: TranslationResult) {
+        val key = key(text, sourceLang, targetLang, model, providerId)
+        synchronized(cache) {
+            cache[key] = CacheEntry(translation, System.currentTimeMillis())
+        }
     }
 
     fun clear() {
-        cache.clear()
-        lastAccessTime.clear()
+        synchronized(cache) {
+            cache.clear()
+        }
     }
 
-    val size: Int get() = cache.size
+    val size: Int get() = synchronized(cache) { cache.size }
 
-    private fun key(text: String, sourceLang: String, targetLang: String, model: String): String =
-        "$model:$sourceLang:$targetLang:$text"
+    private fun key(text: String, sourceLang: String, targetLang: String, model: String, providerId: String): String =
+        "$providerId:$model:$sourceLang:$targetLang:$text"
 }

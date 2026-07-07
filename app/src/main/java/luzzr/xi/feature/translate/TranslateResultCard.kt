@@ -2,8 +2,6 @@ package luzzr.xi.feature.translate
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,38 +38,41 @@ import kotlinx.coroutines.delay
 import luzzr.xi.R
 import luzzr.xi.core.ui.theme.AbstractIcons
 import luzzr.xi.core.ui.theme.AppShape
+import luzzr.xi.core.ui.theme.AppSpacing
+import luzzr.xi.core.ui.components.PressScaleBox
 import luzzr.xi.core.ui.theme.CorrectionAdd
+import luzzr.xi.core.ui.theme.MotionTokens
 
 @Composable
-internal fun ResultCard(resultText: String, onCopy: () -> Unit) {
+internal fun ResultCard(
+    resultText: String, 
+    detectedLanguage: String? = null, 
+    alternatives: List<String> = emptyList(), 
+    usage: luzzr.xi.domain.model.Usage? = null,
+    onCopy: () -> Unit
+) {
     var copied by remember { mutableStateOf(false) }
     val checkScale by animateFloatAsState(
         targetValue = if (copied) 1.2f else 1f,
-        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springGentle(),
+        animationSpec = MotionTokens.springGentle(),
         label = "check_scale"
     )
-    val copyInteractionSource = remember { MutableInteractionSource() }
-    val isCopyPressed by copyInteractionSource.collectIsPressedAsState()
-    val copyScale by animateFloatAsState(
-        targetValue = if (isCopyPressed) 0.90f else 1f,
-        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-        label = "copy_scale"
-    )
-
-    Column(modifier = Modifier.fillMaxWidth().animateContentSize().clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().animateContentSize().clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.card).padding(AppSpacing.lg)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.translate_result_label), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-            Box(
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.translate_result_label), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                if (!detectedLanguage.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.width(AppSpacing.sm))
+                    Box(modifier = Modifier.clip(AppShape.mini).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)).padding(horizontal = 6.dp, vertical = 2.dp)) {
+                        Text(detectedLanguage, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
+            PressScaleBox(
+                onClick = { onCopy(); copied = true },
                 modifier = Modifier
-                    .size(28.dp)
-                    .scale(copyScale)
+                    .size(48.dp)
                     .clip(AppShape.mini)
-                    .clickable(
-                        interactionSource = copyInteractionSource,
-                        indication = null,
-                        onClick = { onCopy(); copied = true }
-                    ),
-                contentAlignment = Alignment.Center
             ) {
                 if (copied) {
                     AbstractIcons.CheckCircle(
@@ -80,16 +82,32 @@ internal fun ResultCard(resultText: String, onCopy: () -> Unit) {
                         tint = CorrectionAdd
                     )
                 } else {
-                val copyDesc = stringResource(R.string.translate_copy)
-                AbstractIcons.Copy(
-                    Modifier.size(16.dp).semantics { contentDescription = copyDesc },
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                    val copyDesc = stringResource(R.string.translate_copy)
+                    AbstractIcons.Copy(
+                        Modifier.size(16.dp).semantics { contentDescription = copyDesc },
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
-    }
-    Spacer(modifier = Modifier.height(6.dp))
-        Text(resultText, fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground, lineHeight = 22.sp)
+        Spacer(modifier = Modifier.height(AppSpacing.sm))
+        Text(resultText, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+        
+        if (alternatives.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(AppSpacing.md))
+            Text(stringResource(R.string.translate_alternatives), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(AppSpacing.xs))
+            alternatives.forEachIndexed { index, alt ->
+                Text("${index + 1}. $alt", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(bottom = 4.dp))
+            }
+        }
+        if (usage != null && usage.totalTokens != null) {
+            Spacer(modifier = Modifier.height(AppSpacing.md))
+            Text(stringResource(R.string.token_usage_format, usage.totalTokens, usage.promptTokens ?: 0, usage.completionTokens ?: 0), 
+                 style = MaterialTheme.typography.labelSmall, 
+                 color = MaterialTheme.colorScheme.secondary,
+                 modifier = Modifier.align(Alignment.End))
+        }
     }
     LaunchedEffect(copied) {
         if (copied) {

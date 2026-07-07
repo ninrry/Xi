@@ -1,6 +1,7 @@
 package luzzr.xi.data.repository
 
 import android.util.Log
+import luzzr.xi.domain.model.SupportedLanguage
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
 import com.google.mlkit.nl.translate.TranslateLanguage
@@ -59,24 +60,26 @@ class MlKitModelManager @Inject constructor() {
         return downloadStates[key(sourceLang, targetLang)] ?: ModelDownloadState.IDLE
     }
 
-    suspend fun isModelDownloaded(sourceLang: String, targetLang: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun isModelDownloaded(
+        sourceLang: String, 
+        targetLang: String,
+        sourceCode: String,
+        targetCode: String
+    ): Boolean = withContext(Dispatchers.IO) {
         val modelKey = key(sourceLang, targetLang)
         if (downloadStates[modelKey] == ModelDownloadState.COMPLETED) {
             return@withContext true
         }
         val modelManager = RemoteModelManager.getInstance()
         try {
-            val sourceCode = convertCode(sourceLang)
-            val targetCode = convertCode(targetLang)
+            val sCode = convertCode(sourceCode)
+            val tCode = convertCode(targetCode)
 
-            val isSourceOk = if (sourceCode == TranslateLanguage.ENGLISH) true else {
-                val model = TranslateRemoteModel.Builder(sourceCode).build()
-                Tasks.await(modelManager.isModelDownloaded(model))
-            }
-            val isTargetOk = if (targetCode == TranslateLanguage.ENGLISH) true else {
-                val model = TranslateRemoteModel.Builder(targetCode).build()
-                Tasks.await(modelManager.isModelDownloaded(model))
-            }
+            val sourceModel = TranslateRemoteModel.Builder(sCode).build()
+            val isSourceOk = Tasks.await(modelManager.isModelDownloaded(sourceModel))
+            
+            val targetModel = TranslateRemoteModel.Builder(tCode).build()
+            val isTargetOk = Tasks.await(modelManager.isModelDownloaded(targetModel))
 
             val result = isSourceOk && isTargetOk
             if (result) {
@@ -298,29 +301,8 @@ class MlKitModelManager @Inject constructor() {
 
     private fun key(source: String, target: String) = "$source->$target"
 
-    private fun convertCode(code: String): String = when (code) {
-        "zh" -> TranslateLanguage.CHINESE
-        "en" -> TranslateLanguage.ENGLISH
-        "ja" -> TranslateLanguage.JAPANESE
-        "ko" -> TranslateLanguage.KOREAN
-        "es" -> TranslateLanguage.SPANISH
-        "fr" -> TranslateLanguage.FRENCH
-        "de" -> TranslateLanguage.GERMAN
-        "it" -> TranslateLanguage.ITALIAN
-        "pt" -> TranslateLanguage.PORTUGUESE
-        "ru" -> TranslateLanguage.RUSSIAN
-        "ar" -> TranslateLanguage.ARABIC
-        "hi" -> TranslateLanguage.HINDI
-        "th" -> TranslateLanguage.THAI
-        "vi" -> TranslateLanguage.VIETNAMESE
-        "id" -> TranslateLanguage.INDONESIAN
-        "tr" -> TranslateLanguage.TURKISH
-        "nl" -> TranslateLanguage.DUTCH
-        "pl" -> TranslateLanguage.POLISH
-        "sv" -> TranslateLanguage.SWEDISH
-        "uk" -> TranslateLanguage.UKRAINIAN
-        else -> TranslateLanguage.ENGLISH
-    }
+    private fun convertCode(code: String): String =
+        SupportedLanguage.getByCode(code).mlKitLangCode ?: TranslateLanguage.ENGLISH
 
     fun downloadStatus(): Map<String, ModelDownloadState> = downloadStates.toMap()
 }

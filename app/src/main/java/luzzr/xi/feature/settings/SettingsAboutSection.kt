@@ -8,27 +8,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import luzzr.xi.BuildConfig
 import luzzr.xi.R
+import luzzr.xi.core.ui.theme.AppSpacing
 
 @Composable
 fun SettingsAboutSection() {
     SectionCard {
         SectionTitle(stringResource(R.string.settings_section_about))
         Text(
-            stringResource(R.string.settings_version),
-            fontSize = 14.sp,
+            "${stringResource(R.string.settings_version)} v${BuildConfig.VERSION_NAME}",
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             stringResource(R.string.settings_desc),
-            fontSize = 13.sp,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.secondary
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(AppSpacing.xs))
         Text(
             stringResource(R.string.settings_default_model_info),
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
         )
     }

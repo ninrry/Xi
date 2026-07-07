@@ -9,8 +9,11 @@ import luzzr.xi.R
 import luzzr.xi.domain.model.EssayCorrectionJson
 import luzzr.xi.domain.model.TranslationResult
 import luzzr.xi.domain.model.AppError
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object JsonResponseParser {
+@Singleton
+class JsonResponseParser @Inject constructor() {
 
     private val gson = Gson()
 
@@ -23,7 +26,7 @@ object JsonResponseParser {
                     AppError.ParseError(context.getString(R.string.error_parse_failed), raw)
                 )
                 result.translation?.isBlank() ?: true -> Result.failure(
-                    AppError.ParseError(context.getString(R.string.error_translation_empty), raw)
+                    AppError.ParseError(context.getString(R.string.error_translate_result_empty), raw)
                 )
                 else -> Result.success(result)
             }

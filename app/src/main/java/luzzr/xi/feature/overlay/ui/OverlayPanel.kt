@@ -1,12 +1,7 @@
 package luzzr.xi.feature.overlay.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring.DampingRatioMediumBouncy
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,9 +9,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,8 +48,15 @@ import luzzr.xi.domain.model.SupportedLanguage
 import luzzr.xi.domain.model.TranslationEngine
 import luzzr.xi.core.ui.theme.AbstractIcons
 import luzzr.xi.core.ui.theme.AppShape
-import luzzr.xi.core.ui.theme.CorrectionAdd
-import luzzr.xi.core.ui.theme.CorrectionDelete
+import luzzr.xi.core.ui.theme.AppSpacing
+import luzzr.xi.core.ui.components.PressScaleBox
+import luzzr.xi.core.ui.components.ThinkingSelector
+import luzzr.xi.core.ui.theme.LocalExtendedColors
+import luzzr.xi.core.ui.theme.MotionTokens
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalContext
+import luzzr.xi.core.ui.components.EngineSelector
 
 @Composable
 fun TranslationPanelContent(
@@ -65,12 +64,14 @@ fun TranslationPanelContent(
     inputText: String,
     onInputChange: (String) -> Unit,
     resultText: String,
+    usage: luzzr.xi.domain.model.Usage?,
     isTranslating: Boolean,
     isModelDownloading: Boolean = false,
     error: String?,
     sourceLang: SupportedLanguage,
     targetLang: SupportedLanguage,
     engine: TranslationEngine,
+    thinkingLevel: luzzr.xi.domain.model.ThinkingLevel,
     onTranslate: () -> Unit,
     onSwap: () -> Unit,
     onCopy: () -> Unit,
@@ -80,19 +81,22 @@ fun TranslationPanelContent(
     onExitAnimationFinished: () -> Unit,
     onSourceLangChange: (SupportedLanguage) -> Unit,
     onTargetLangChange: (SupportedLanguage) -> Unit,
-    onEngineChange: (TranslationEngine) -> Unit
+    onEngineChange: (TranslationEngine) -> Unit,
+    onThinkingLevelChange: (luzzr.xi.domain.model.ThinkingLevel) -> Unit
 ) {
+    val context = LocalContext.current
+    val closePanelDesc = stringResource(R.string.semantics_close_panel)
+    val stopServiceDesc = stringResource(R.string.semantics_stop_service)
     // E4: Unified exit timing — both scale and alpha use same duration
-    val exitDurationMs = 250
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.85f,
-        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springGentle(),
+        animationSpec = MotionTokens.springGentle(),
         label = "panel_scale"
     )
 
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = exitDurationMs),
+        animationSpec = MotionTokens.tweenMedium(),
         label = "panel_alpha",
         finishedListener = { if (!visible) onExitAnimationFinished() }
     )
@@ -100,11 +104,13 @@ fun TranslationPanelContent(
     var showSourcePicker by remember { mutableStateOf(false) }
     var showTargetPicker by remember { mutableStateOf(false) }
     var copied by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var copyJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp)
+            .padding(AppSpacing.md)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -113,9 +119,9 @@ fun TranslationPanelContent(
             .clip(AppShape.card)
             .background(MaterialTheme.colorScheme.background)
             .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.card)
-            .padding(14.dp)
+            .padding(AppSpacing.lg)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -123,82 +129,46 @@ fun TranslationPanelContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(stringResource(R.string.overlay_panel_title),
-                    fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                Row(horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)) {
                     // U4: Copy button with success feedback
-                    val copyInteraction = remember { MutableInteractionSource() }
-                    val isCopyPressed by copyInteraction.collectIsPressedAsState()
-                    val copyScale by animateFloatAsState(
-                        targetValue = if (isCopyPressed) 0.90f else 1f,
-                        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                        label = "copy"
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .graphicsLayer {
-                                scaleX = copyScale
-                                scaleY = copyScale
+                    PressScaleBox(
+                        onClick = {
+                            onCopy()
+                            copied = true
+                            copyJob?.cancel()
+                            copyJob = scope.launch {
+                                delay(1500)
+                                copied = false
                             }
+                        },
+                        modifier = Modifier
+                            .size(48.dp)
                             .clip(AppShape.mini)
-                            .clickable(interactionSource = copyInteraction, indication = null) {
-                                onCopy()
-                                copied = true
-                                // Use a coroutine scope that survives recomposition
-                                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                                    delay(1500)
-                                    copied = false
-                                }
-                            },
-                        contentAlignment = Alignment.Center
                     ) {
                         if (copied) {
-                            AbstractIcons.CheckCircle(modifier = Modifier.size(16.dp), tint = CorrectionAdd)
+                            AbstractIcons.CheckCircle(modifier = Modifier.size(16.dp), tint = LocalExtendedColors.current.correctionAdd)
                         } else {
                             AbstractIcons.Copy(modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                         }
                     }
 
-                    val launchInteraction = remember { MutableInteractionSource() }
-                    val isLaunchPressed by launchInteraction.collectIsPressedAsState()
-                    val launchScale by animateFloatAsState(
-                        targetValue = if (isLaunchPressed) 0.90f else 1f,
-                        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                        label = "launch"
-                    )
-                    Box(
+                    PressScaleBox(
+                        onClick = onLaunchEssay,
                         modifier = Modifier
-                            .size(30.dp)
-                            .graphicsLayer {
-                                scaleX = launchScale
-                                scaleY = launchScale
-                            }
+                            .size(48.dp)
                             .clip(AppShape.mini)
-                            .clickable(interactionSource = launchInteraction, indication = null, onClick = onLaunchEssay),
-                        contentAlignment = Alignment.Center
                     ) {
                         AbstractIcons.Edit(modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                     }
 
                     // U2: Close button — CircleShape → AppShape.mini
-                    val closeInteraction = remember { MutableInteractionSource() }
-                    val isClosePressed by closeInteraction.collectIsPressedAsState()
-                    val closeScale by animateFloatAsState(
-                        targetValue = if (isClosePressed) 0.90f else 1f,
-                        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                        label = "close"
-                    )
-                    Box(
+                    PressScaleBox(
+                        onClick = onDismiss,
                         modifier = Modifier
-                            .size(30.dp)
-                            .graphicsLayer {
-                                scaleX = closeScale
-                                scaleY = closeScale
-                            }
+                            .size(48.dp)
                             .clip(AppShape.mini)
-                            .semantics { contentDescription = "close panel" }
-                            .clickable(interactionSource = closeInteraction, indication = null, onClick = onDismiss),
-                        contentAlignment = Alignment.Center
+                            .semantics { contentDescription = closePanelDesc }
                     ) {
                         val closeDesc = stringResource(R.string.overlay_close)
                         AbstractIcons.Close(
@@ -215,30 +185,23 @@ fun TranslationPanelContent(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val srcInteraction = remember { MutableInteractionSource() }
-                val isSrcPressed by srcInteraction.collectIsPressedAsState()
-                val srcScale by animateFloatAsState(
-                    targetValue = if (isSrcPressed) 0.90f else 1f,
-                    animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                    label = "srcPress"
-                )
-                Box(
+                PressScaleBox(
+                    onClick = {
+                        showSourcePicker = !showSourcePicker
+                        showTargetPicker = false
+                    },
+                    onPressScale = 0.97f,
                     modifier = Modifier
-                        .graphicsLayer { scaleX = srcScale; scaleY = srcScale }
                         .clip(AppShape.small)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .clickable(interactionSource = srcInteraction, indication = null) {
-                            showSourcePicker = !showSourcePicker
-                            showTargetPicker = false
-                        }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(sourceLang.nativeName, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(sourceLang.nativeName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(AppSpacing.xs))
                         val srcArrowRotation by animateFloatAsState(
                             targetValue = if (showSourcePicker) 180f else 0f,
-                            animationSpec = spring(dampingRatio = DampingRatioMediumBouncy),
+                            animationSpec = MotionTokens.springDefault(),
                             label = "srcArrow"
                         )
                         AbstractIcons.ArrowDropDown(
@@ -250,67 +213,50 @@ fun TranslationPanelContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(AppSpacing.md))
                 
                 // E7: Swap button with rotation animation
-                val swapInteraction = remember { MutableInteractionSource() }
-                val isSwapPressed by swapInteraction.collectIsPressedAsState()
-                val swapScale by animateFloatAsState(
-                    targetValue = if (isSwapPressed) 0.90f else 1f,
-                    animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                    label = "swap"
-                )
                 var swapRotation by remember { mutableStateOf(0f) }
                 val animatedSwapRotation by animateFloatAsState(
                     targetValue = swapRotation,
-                    animationSpec = spring(dampingRatio = DampingRatioMediumBouncy),
+                    animationSpec = MotionTokens.springDefault(),
                     label = "swapRotation"
                 )
-                Box(
+                PressScaleBox(
+                    onClick = {
+                        swapRotation += 180f
+                        onSwap()
+                    },
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(36.dp)
                         .graphicsLayer {
-                            scaleX = swapScale
-                            scaleY = swapScale
                             rotationZ = animatedSwapRotation
                         }
                         .clip(AppShape.mini)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .clickable(interactionSource = swapInteraction, indication = null) {
-                            swapRotation += 180f
-                            onSwap()
-                        },
-                    contentAlignment = Alignment.Center
                 ) {
                     AbstractIcons.Swap(modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                 }
                 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(AppSpacing.md))
 
-                val tgtInteraction = remember { MutableInteractionSource() }
-                val isTgtPressed by tgtInteraction.collectIsPressedAsState()
-                val tgtScale by animateFloatAsState(
-                    targetValue = if (isTgtPressed) 0.90f else 1f,
-                    animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                    label = "tgtPress"
-                )
-                Box(
+                PressScaleBox(
+                    onClick = {
+                        showTargetPicker = !showTargetPicker
+                        showSourcePicker = false
+                    },
+                    onPressScale = 0.97f,
                     modifier = Modifier
-                        .graphicsLayer { scaleX = tgtScale; scaleY = tgtScale }
                         .clip(AppShape.small)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .clickable(interactionSource = tgtInteraction, indication = null) {
-                            showTargetPicker = !showTargetPicker
-                            showSourcePicker = false
-                        }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(targetLang.nativeName, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(targetLang.nativeName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(AppSpacing.xs))
                         val tgtArrowRotation by animateFloatAsState(
                             targetValue = if (showTargetPicker) 180f else 0f,
-                            animationSpec = spring(dampingRatio = DampingRatioMediumBouncy),
+                            animationSpec = MotionTokens.springDefault(),
                             label = "tgtArrow"
                         )
                         AbstractIcons.ArrowDropDown(
@@ -343,10 +289,18 @@ fun TranslationPanelContent(
                 }
             )
 
+            // Thinking Level selector
+            ThinkingSelector(
+                currentLevel = thinkingLevel,
+                onLevelChange = onThinkingLevelChange,
+                modifier = Modifier.fillMaxWidth()
+            )
+
             // Engine selector
             EngineSelector(
-                engine = engine,
-                onEngineChange = onEngineChange
+                currentEngine = engine,
+                onEngineChange = onEngineChange,
+                modifier = Modifier.fillMaxWidth()
             )
 
             // Input
@@ -354,92 +308,53 @@ fun TranslationPanelContent(
                 value = inputText,
                 onValueChange = onInputChange,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp, max = 120.dp),
-                placeholder = { Text(stringResource(R.string.overlay_input_hint), color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
+                placeholder = { Text(stringResource(R.string.overlay_input_hint), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall) },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                     focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                     cursorColor = MaterialTheme.colorScheme.primary, focusedTextColor = MaterialTheme.colorScheme.onBackground, unfocusedTextColor = MaterialTheme.colorScheme.onBackground
                 ),
                 shape = AppShape.input,
-                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp)
+                textStyle = MaterialTheme.typography.bodySmall
             )
 
             // Translate button
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
             ) {
-                val translateInteraction = remember { MutableInteractionSource() }
-                val isTranslatePressed by translateInteraction.collectIsPressedAsState()
-                val translateScale by animateFloatAsState(
-                    targetValue = if (isTranslatePressed) 0.92f else 1f,
-                    animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                    label = "trans"
-                )
-                // E11: Pulse loading animation
-                val infiniteTransition = rememberInfiniteTransition(label = "translate_pulse")
-                val pulseScale by infiniteTransition.animateFloat(
-                    initialValue = 1f,
-                    targetValue = 1.05f,
-                    animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                        animation = androidx.compose.animation.core.tween(600),
-                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
-                    ),
-                    label = "pulse"
-                )
-                val btnScale = if (isTranslating) translateScale * pulseScale else translateScale
-                Box(
+                PressScaleBox(
+                    enabled = !isTranslating,
+                    onClick = onTranslate,
+                    onPressScale = 0.97f,
                     modifier = Modifier
                         .weight(1f)
                         .height(44.dp)
-                        .graphicsLayer {
-                            scaleX = btnScale
-                            scaleY = btnScale
-                        }
                         .clip(AppShape.button)
                         .background(if (isTranslating) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary)
-                        .clickable(
-                            enabled = !isTranslating,
-                            interactionSource = translateInteraction,
-                            indication = null,
-                            onClick = onTranslate
-                        ),
-                    contentAlignment = Alignment.Center
                 ) {
                     if (isTranslating) {
                         if (isModelDownloading) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)) {
                                 CircularProgressIndicator(modifier = Modifier.size(14.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.dp)
-                                Text("模型下载中...", fontSize = 12.sp, color = MaterialTheme.colorScheme.background)
+                                Text(stringResource(R.string.mlkit_downloading), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.background)
                             }
                         } else {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.background, strokeWidth = 2.dp)
                         }
                     } else {
-                        Text(stringResource(R.string.overlay_translate_btn), fontSize = 13.sp, color = MaterialTheme.colorScheme.background, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.overlay_translate_btn), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.background)
                     }
                 }
                 
                 // U2: Stop button — CircleShape → AppShape.mini
-                val stopInteraction = remember { MutableInteractionSource() }
-                val isStopPressed by stopInteraction.collectIsPressedAsState()
-                val stopScale by animateFloatAsState(
-                    targetValue = if (isStopPressed) 0.90f else 1f,
-                    animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                    label = "stop"
-                )
-                Box(
+                PressScaleBox(
+                    onClick = onStop,
                     modifier = Modifier
-                        .size(40.dp)
-                        .graphicsLayer {
-                            scaleX = stopScale
-                            scaleY = stopScale
-                        }
+                        .size(48.dp)
                         .clip(AppShape.mini)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .semantics { contentDescription = "stop service" }
-                        .clickable(interactionSource = stopInteraction, indication = null, onClick = onStop),
-                    contentAlignment = Alignment.Center
+                        .semantics { contentDescription = stopServiceDesc }
                 ) {
                     AbstractIcons.Close(modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
                 }
@@ -448,31 +363,41 @@ fun TranslationPanelContent(
             // E10: Error message with entrance animation
             AnimatedVisibility(
                 visible = error != null,
-                enter = fadeIn(tween(200)) + expandVertically(tween(250)),
-                exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
+                enter = fadeIn(MotionTokens.tweenShortEasing()) + expandVertically(MotionTokens.tweenMedium()),
+                exit = fadeOut(MotionTokens.tweenShort()) + shrinkVertically(MotionTokens.tweenShort())
             ) {
                 if (error != null) {
-                    Text(error, color = CorrectionDelete, fontSize = 12.sp)
+                    Text(error, color = LocalExtendedColors.current.correctionDelete, style = MaterialTheme.typography.bodySmall)
                 }
             }
 
             // E9: Result with entrance animation
             AnimatedVisibility(
                 visible = resultText.isNotEmpty(),
-                enter = fadeIn(tween(300)) + slideInVertically(
+                enter = fadeIn(MotionTokens.tweenMedium()) + slideInVertically(
                     initialOffsetY = { it / 4 },
-                    animationSpec = spring(dampingRatio = DampingRatioMediumBouncy)
+                    animationSpec = MotionTokens.springDefault()
                 ),
-                exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
+                exit = fadeOut(MotionTokens.tweenShort()) + shrinkVertically(MotionTokens.tweenShort())
             ) {
-                // U8: Result area — RoundedCornerShape(10.dp) → AppShape.mini
                 Box(
                     modifier = Modifier.fillMaxWidth()
+                        .heightIn(max = 200.dp)
                         .clip(AppShape.mini)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(10.dp)
+                        .padding(AppSpacing.md)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    Text(resultText, fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground, lineHeight = 18.sp)
+                    Text(resultText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground, lineHeight = 18.sp)
+                    if (usage != null && usage.totalTokens != null) {
+                        Spacer(modifier = Modifier.height(AppSpacing.xs))
+                        Text(
+                            stringResource(R.string.tokens_format, usage.totalTokens, usage.promptTokens ?: 0, usage.completionTokens ?: 0),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.align(Alignment.BottomEnd)
+                        )
+                    }
                 }
             }
         }

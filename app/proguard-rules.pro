@@ -1,39 +1,28 @@
-# Retrofit
--keepattributes Signature
--keepattributes *Annotation*
--keep class retrofit2.** { *; }
--keepclasseswithmembers class * {
-    @retrofit2.http.* <methods>;
+# Retrofit — keep interface and method signatures
+-keep,allowobfuscation interface luzzr.xi.core.network.OpenAiApi
+-keepclassmembers interface luzzr.xi.core.network.OpenAiApi {
+    *;
 }
 
-# Gson
--keep class com.google.gson.** { *; }
+# Gson — keep all serialized model classes
 -keep class luzzr.xi.domain.model.** { *; }
+-keep class luzzr.xi.domain.model.CorrectionResult { *; }
+-keep class luzzr.xi.data.cache.** { *; }
 
-# ML Kit Translation
--keep class com.google.mlkit.** { *; }
--keep class com.google.android.gms.internal.mlkit_vision_text.** { *; }
+# ML Kit — only keep what's accessed
 -dontwarn com.google.mlkit.**
+-keep class com.google.mlkit.translate.Translator { *; }
+-keep class com.google.mlkit.translate.TranslatorOptions { *; }
+-keep class com.google.mlkit.translate.TranslateLanguage { *; }
+-keep class com.google.mlkit.common.modeldownload.RemoteModelManager { *; }
 
-# Google Play Services
--keep class com.google.android.gms.** { *; }
--dontwarn com.google.android.gms.**
+# Hilt — allow obfuscation of internal classes
+-dontwarn dagger.hilt.**
+-keep class dagger.hilt.android.internal.lifecycle.** { *; }
 
-# OkHttp
--keep class okhttp3.** { *; }
--keep class okio.** { *; }
+# OkHttp — not needed, R8 handles it
 -dontwarn okhttp3.**
 -dontwarn okio.**
 
-# Hilt
--keep class dagger.hilt.** { *; }
--keep class javax.inject.** { *; }
--keep class * extends dagger.hilt.android.internal.managers.ViewComponentManager$FragmentContextWrapper { *; }
-
-# AndroidX
--keep class androidx.** { *; }
--dontwarn androidx.**
-
-# Kotlin Coroutines
--keep class kotlinx.coroutines.** { *; }
--dontwarn kotlinx.coroutines.**
+# Google Play Services
+-dontwarn com.google.android.gms.**

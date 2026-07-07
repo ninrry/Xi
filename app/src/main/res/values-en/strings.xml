@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Xi</string>
+
+    <!-- Bottom Navigation -->
+    <string name="tab_translate">Translate</string>
+    <string name="tab_essay">Essay</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Translate Screen -->
+    <string name="translate_title">Translate</string>
+    <string name="translate_input_hint">Type or paste text here…</string>
+    <string name="translate_btn">Translate</string>
+    <string name="translate_result_label">Result</string>
+    <string name="translate_overlay_btn">Enable Overlay Panel</string>
+    <string name="translate_empty_title">Start Translating</string>
+    <string name="translate_empty_desc">Enter English or Chinese text, and AI will translate it instantly.</string>
+    <string name="translate_error_empty">Please enter some text</string>
+    <string name="translate_copy">Copy</string>
+    <string name="translate_alternatives">Alternatives</string>
+    <string name="translate_clear">Clear</string>
+    <string name="translate_swap">Swap languages</string>
+    <string name="translate_select_source">Select Source</string>
+    <string name="translate_select_target">Select Target</string>
+
+    <!-- Essay Screen -->
+    <string name="essay_title">Essay Correction</string>
+    <string name="essay_input_hint">Type or paste your English essay here…</string>
+    <string name="essay_correct_btn">Correct Essay</string>
+    <string name="essay_tab_corrections">Corrections</string>
+    <string name="essay_tab_corrected">Corrected</string>
+    <string name="essay_empty_title">Submit Essay</string>
+    <string name="essay_empty_desc">Paste your English essay, and the AI teacher will correct it sentence by sentence and provide a revised version.</string>
+    <string name="essay_error_empty">Please enter your essay</string>
+    <string name="essay_no_errors">No obvious errors found.</string>
+    <string name="essay_clear">Clear</string>
+    <string name="essay_thinking_level">Thinking Level (Correction defaults to high)</string>
+    <string name="essay_input_text">Text</string>
+    <string name="essay_input_photo">Camera</string>
+    <string name="essay_input_pdf">PDF</string>
+    <string name="essay_gallery">Gallery</string>
+    <string name="essay_no_selection">Tap a button above to select an image or PDF</string>
+    <string name="essay_image_selected">Image selected</string>
+    <string name="essay_pdf_pages">Loaded %d PDF pages</string>
+    <string name="essay_score">Score Analysis</string>
+    <string name="essay_tab_tips">Writing Tips</string>
+    <string name="essay_error_no_image">Please select an image first</string>
+    <string name="essay_error_no_pdf">Please select a PDF file first</string>
+    <string name="error_image_read_failed">Failed to read image</string>
+    <string name="permission_camera_title">Camera Permission Required</string>
+    <string name="permission_camera_desc">Camera permission is required to take photos. Please enable it in Settings.</string>
+    <string name="permission_go_settings">Go to Settings</string>
+    <string name="permission_cancel">Cancel</string>
+    <string name="guidance_api_key">Please configure your API Key in Settings first</string>
+    <string name="guidance_model">Please select a model in Settings first</string>
+    <string name="guidance_network">Network unavailable. Please check your connection.</string>
+
+    <string name="essay_grammar_correction">Grammar Correction</string>
+    <string name="essay_vocabulary_optimization">Vocabulary Optimization</string>
+    <string name="essay_structure_analysis">Structure Analysis</string>
+    <string name="essay_style_suggestions">Style Suggestions</string>
+    <string name="essay_no_obvious_problems">No obvious problems found.</string>
+    <string name="essay_not_scored">Not scored</string>
+    <string name="essay_no_suggestions">No suggestions</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_ai">AI Services</string>
+    <string name="settings_api_url">API URL</string>
+    <string name="settings_api_url_placeholder">https://api.xiaomimimo.com/v1</string>
+    <string name="settings_api_key">API Key</string>
+    <string name="settings_api_key_placeholder">Enter your API Key</string>
+    <string name="settings_model">Model</string>
+    <string name="settings_model_placeholder">Test connection first to get models</string>
+    <string name="settings_test_connection">Test Connection</string>
+    <string name="settings_connection_testing">Testing…</string>
+    <string name="settings_connection_success">Connection successful! Found %d models.</string>
+    <string name="settings_connection_fail">Connection failed</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_desc">AI-powered English Learning Assistant</string>
+    <string name="settings_default_model_info">Default: Xiaomi MiMo (mimo-v2.5 model)</string>
+    <string name="settings_show_key">Show API Key</string>
+    <string name="settings_hide_key">Hide API Key</string>
+
+    <!-- Overlay -->
+    <string name="overlay_notification_channel">Translate Overlay</string>
+    <string name="overlay_notification_title">Xi Translate Service</string>
+    <string name="overlay_notification_text">Translate overlay is running</string>
+    <string name="overlay_panel_title">Quick Translate</string>
+    <string name="overlay_input_hint">Type or paste text…</string>
+    <string name="overlay_translate_btn">Translate</string>
+    <string name="overlay_result_label">Result</string>
+    <string name="overlay_close">Close</string>
+    <string name="overlay_stop">Stop Overlay</string>
+    <string name="overlay_qs_label">Translate Overlay</string>
+    <string name="overlay_qs_subtitle">Quick translation assistant</string>
+
+    <!-- ML Kit Offline Translation -->
+    <string name="mlkit_section_title">Offline Translate</string>
+    <string name="mlkit_section_desc">Uses Google\'s on-device translation engine. Models are downloaded on first use (tens of MBs) and are available offline thereafter.</string>
+    <string name="mlkit_model_ready">Offline models ready</string>
+    <string name="mlkit_downloading">Downloading…</string>
+    <string name="mlkit_download_failed">Download failed</string>
+    <string name="mlkit_download_cancelled">Download cancelled</string>
+    <string name="mlkit_prepare_download">Preparing download…</string>
+    <string name="mlkit_download_retry">Download failed, tap to retry</string>
+
+    <!-- Common -->
+    <string name="loading">Processing…</string>
+    <string name="error_network">Network request failed</string>
+    <string name="error_no_network">No network connection. Please check your settings.</string>
+    <string name="error_api">API Error: %s</string>
+    <string name="error_api_with_provider">[%1$s] API error: %2$s</string>
+    <string name="error_api_client">Failed to create API client</string>
+    <string name="error_empty_key">Please enter your API Key in Settings first</string>
+    <string name="error_result_empty">Result is empty</string>
+    <string name="error_translate_result_empty">Translation result is empty, please try again</string>
+    <string name="error_essay_result_empty">Correction result is empty</string>
+    <string name="error_translate_failed">Translation failed</string>
+    <string name="error_translate_timeout">Translation timeout. Please check your network or try again.</string>
+    <string name="error_essay_failed">Correction failed</string>
+    <string name="error_network_detail">Network request failed: %s</string>
+    <string name="error_parse_failed">AI returned invalid format, please try again</string>
+    <string name="error_invalid_json">AI returned invalid JSON format, please try again</string>
+    <string name="error_ai_not_english">Input is not English. Please provide an English essay.</string>
+    <string name="error_ai_unreadable_image">Image is unreadable. Please provide a clearer image.</string>
+    <string name="error_ai_generic">AI processing error: %s</string>
+    <string name="copy">Copy</string>
+    <string name="retry">Retry</string>
+
+    <!-- Accessibility / Semantics -->
+    <string name="semantics_collapse_options">Collapse options</string>
+    <string name="semantics_expand_options">Expand options</string>
+    <string name="semantics_open_translate_panel">Open translation panel</string>
+    <string name="semantics_close_panel">Close panel</string>
+    <string name="semantics_stop_service">Stop service</string>
+
+    <!-- Engine & Thinking Labels -->
+    <string name="engine_label">Translation Engine</string>
+    <string name="thinking_label">Thinking Level</string>
+    <string name="engine_ai_name">AI Translation</string>
+    <string name="engine_ai_desc">Higher quality via AI models</string>
+    <string name="engine_mlkit_name">Offline Translation</string>
+    <string name="engine_mlkit_desc">Faster, on-device translation</string>
+    <string name="thinking_low_name">Low</string>
+    <string name="thinking_low_desc">Simple reasoning</string>
+    <string name="thinking_medium_name">Medium</string>
+    <string name="thinking_medium_desc">Moderate thinking</string>
+    <string name="thinking_high_name">High</string>
+    <string name="thinking_high_desc">Deep analysis</string>
+
+    <!-- Essay Camera Errors -->
+    <string name="essay_camera_not_found">No camera app found or failed to open camera</string>
+    <string name="essay_camera_permission_denied">Failed to request camera permission</string>
+
+    <!-- ML Kit Section (extracted) -->
+    <string name="mlkit_download_prompt">Tap the button below to download the offline translation model. The initial download is approximately tens of megabytes.</string>
+    <string name="error_mlkit_timeout">Model download or translation timed out. Please check your network connection.</string>
+    <string name="mlkit_download_model">Download Offline Model</string>
+    <string name="translate_same_language">Source and target languages cannot be the same</string>
+    <string name="settings_connect_first">Please test connection first</string>
+    <string name="settings_search_placeholder">Search languages…</string>
+    <string name="overlay_service_stopping">Stopping overlay translation</string>
+    <string name="error_input_too_long_translate">Input too long (max 5000 characters)</string>
+    <string name="error_input_too_long_essay">Input too long (max 10000 characters)</string>
+    <string name="error_mlkit_auto_not_supported">Auto-detect is not supported for offline translation. Please select a source language.</string>
+    <string name="tokens_format">Tokens: %1$d (Prompt: %2$d, Completion: %3$d)</string>
+    <string name="token_usage_format">Tokens: %1$d (Prompt: %2$d, Completion: %3$d)</string>
+    <string name="score_grammar">Grammar</string>
+    <string name="score_vocab">Vocab</string>
+    <string name="score_structure">Structure</string>
+    <string name="score_style">Style</string>
+    <string name="line_info">Line %d: </string>
+
+    <!-- Provider -->
+    <string name="provider_opencode">OpenCode Go</string>
+    <string name="provider_xiaomi_mimo">Xiaomi MiMo</string>
+    <string name="provider_custom">Custom API</string>
+    <string name="provider_section_title">AI Provider</string>
+    <string name="provider_opencode_desc">OpenCode subscription service, default mimo-v2.5 model</string>
+    <string name="provider_xiaomi_mimo_desc">Xiaomi MiMo API platform, pay-as-you-go or Token Plan</string>
+    <string name="provider_custom_desc">Any OpenAI-compatible API service</string>
+    <string name="provider_switch_confirm">Switching provider will reset API URL and model settings. Continue?</string>
+    <string name="provider_switch_confirm_yes">Switch</string>
+    <string name="provider_xiaomi_mimo_get_key">Get MiMo API Key</string>
+    <string name="provider_opencode_get_key">Go to OpenCode</string>
+    <string name="error_unknown">Unknown error, please retry</string>
+</resources>

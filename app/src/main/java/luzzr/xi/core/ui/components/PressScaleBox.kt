@@ -1,5 +1,6 @@
 package luzzr.xi.core.ui.components
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalView
 import luzzr.xi.core.ui.theme.MotionTokens
 
 /**
@@ -37,6 +39,10 @@ fun PressScaleBox(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val view = LocalView.current
+    if (isPressed) {
+        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+    }
     val scale by animateFloatAsState(
         targetValue = if (isPressed) onPressScale else 1f,
         animationSpec = MotionTokens.springGentle(),

@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -17,7 +16,7 @@ import javax.inject.Singleton
 internal val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 data class AppSettings(
-    val apiBaseUrl: String = "https://opencode.ai/zen/go/v1",
+    val apiBaseUrl: String = "https://api.xiaomimimo.com/v1",
     val apiKey: String = "",
     val model: String = "mimo-v2.5",
     val proxyEnabled: Boolean = false,
@@ -26,21 +25,14 @@ data class AppSettings(
     val overlayEnabled: Boolean = false,
     val translateThinkingLevel: String = "medium",
     val essayThinkingLevel: String = "high",
-    val translationEngine: String = "mlkit"
+    val translationEngine: String = "mlkit",
+    val providerId: String = "xiaomi_mimo"
 )
 
 @Singleton
 class SettingsDataStore @Inject constructor(
-    @ApplicationContext private val context: Context
+    private val dataStore: DataStore<Preferences>
 ) {
-    internal constructor(context: Context, dataStore: DataStore<Preferences>) : this(context) {
-        this._dataStore = dataStore
-    }
-
-    private var _dataStore: DataStore<Preferences>? = null
-
-    private val dataStoreInstance: DataStore<Preferences>
-        get() = _dataStore ?: context.dataStore
 
     private object Keys {
         val API_BASE_URL = stringPreferencesKey("api_base_url")
@@ -53,12 +45,13 @@ class SettingsDataStore @Inject constructor(
         val TRANSLATE_THINKING = stringPreferencesKey("translate_thinking_level")
         val ESSAY_THINKING = stringPreferencesKey("essay_thinking_level")
         val TRANSLATE_ENGINE = stringPreferencesKey("translation_engine")
+        val PROVIDER_ID = stringPreferencesKey("provider_id")
     }
 
     val settings: Flow<AppSettings>
-        get() = dataStoreInstance.data.map { prefs ->
+        get() = dataStore.data.map { prefs ->
         AppSettings(
-            apiBaseUrl = prefs[Keys.API_BASE_URL] ?: "https://opencode.ai/zen/go/v1",
+            apiBaseUrl = prefs[Keys.API_BASE_URL] ?: "https://api.xiaomimimo.com/v1",
             apiKey = prefs[Keys.API_KEY] ?: "",
             model = prefs[Keys.MODEL] ?: "mimo-v2.5",
             proxyEnabled = prefs[Keys.PROXY_ENABLED] ?: false,
@@ -67,24 +60,25 @@ class SettingsDataStore @Inject constructor(
             overlayEnabled = prefs[Keys.OVERLAY_ENABLED] ?: false,
             translateThinkingLevel = prefs[Keys.TRANSLATE_THINKING] ?: "medium",
             essayThinkingLevel = prefs[Keys.ESSAY_THINKING] ?: "high",
-            translationEngine = prefs[Keys.TRANSLATE_ENGINE] ?: "mlkit"
+            translationEngine = prefs[Keys.TRANSLATE_ENGINE] ?: "mlkit",
+            providerId = prefs[Keys.PROVIDER_ID] ?: "xiaomi_mimo"
         )
     }
 
     suspend fun updateApiBaseUrl(url: String) {
-        dataStoreInstance.edit { it[Keys.API_BASE_URL] = url }
+        dataStore.edit { it[Keys.API_BASE_URL] = url }
     }
 
     suspend fun updateApiKey(key: String) {
-        dataStoreInstance.edit { it[Keys.API_KEY] = key }
+        dataStore.edit { it[Keys.API_KEY] = key }
     }
 
     suspend fun updateModel(model: String) {
-        dataStoreInstance.edit { it[Keys.MODEL] = model }
+        dataStore.edit { it[Keys.MODEL] = model }
     }
 
     suspend fun updateProxy(enabled: Boolean, host: String, port: Int) {
-        dataStoreInstance.edit {
+        dataStore.edit {
             it[Keys.PROXY_ENABLED] = enabled
             it[Keys.PROXY_HOST] = host
             it[Keys.PROXY_PORT] = port
@@ -92,18 +86,22 @@ class SettingsDataStore @Inject constructor(
     }
 
     suspend fun updateOverlayEnabled(enabled: Boolean) {
-        dataStoreInstance.edit { it[Keys.OVERLAY_ENABLED] = enabled }
+        dataStore.edit { it[Keys.OVERLAY_ENABLED] = enabled }
     }
 
     suspend fun updateTranslateThinkingLevel(level: String) {
-        dataStoreInstance.edit { it[Keys.TRANSLATE_THINKING] = level }
+        dataStore.edit { it[Keys.TRANSLATE_THINKING] = level }
     }
 
     suspend fun updateEssayThinkingLevel(level: String) {
-        dataStoreInstance.edit { it[Keys.ESSAY_THINKING] = level }
+        dataStore.edit { it[Keys.ESSAY_THINKING] = level }
     }
 
     suspend fun updateTranslationEngine(engine: String) {
-        dataStoreInstance.edit { it[Keys.TRANSLATE_ENGINE] = engine }
+        dataStore.edit { it[Keys.TRANSLATE_ENGINE] = engine }
+    }
+
+    suspend fun updateProviderId(providerId: String) {
+        dataStore.edit { it[Keys.PROVIDER_ID] = providerId }
     }
 }

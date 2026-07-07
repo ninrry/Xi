@@ -12,7 +12,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -31,7 +31,6 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import luzzr.xi.R
 import luzzr.xi.core.datastore.SettingsDataStore
 import luzzr.xi.domain.model.TranslationEngine
-import luzzr.xi.domain.model.UiText
 import luzzr.xi.domain.usecase.TranslateUseCase
 import luzzr.xi.core.ui.theme.XiTheme
 import luzzr.xi.feature.overlay.ui.EdgePillTrigger
@@ -47,14 +46,12 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
-    @Inject lateinit var settingsDataStore: SettingsDataStore
-    @Inject lateinit var translateUseCase: TranslateUseCase
+    @Inject lateinit var overlayController: OverlayController
 
     private lateinit var windowManager: WindowManager
     private var pillView: android.view.View? = null
     private var panelView: android.view.View? = null
     private var touchHandler: BubbleTouchHandler? = null
-    private var translateJob: Job? = null
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val savedStateRegistryController = SavedStateRegistryController.create(this)
@@ -62,9 +59,6 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
-
-    private val _uiState = MutableStateFlow(OverlayUiState())
-    val uiState = _uiState.asStateFlow()
 
     private var isStopping = false
     private var panelCloseTime = 0L
@@ -84,6 +78,10 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         OverlayNotificationHelper.createChannel(this)
         startForeground(OverlayNotificationHelper.NOTIFICATION_ID, OverlayNotificationHelper.createNotification(this))
+        
+        overlayController.initialize(serviceScope)
+        
+        lifecycleRegistry.currentState = Lifecycle.State.STARTED
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         showPill()
     }
@@ -92,8 +90,8 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
     override fun onDestroy() {
         isRunning.set(false)
-        translateJob?.cancel()
-        touchHandler?.cancelAutoHide()
+        overlayController.cancelTranslate()
+        touchHandler?.cancelLongPress()
         touchHandler = null
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
         serviceScope.cancel()
@@ -112,6 +110,12 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     // ── Floating Bubble ───────────────────────────────────────
 
     private fun showPill() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
+            && !Settings.canDrawOverlays(this)) {
+            Log.w("Overlay", "SYSTEM_ALERT_WINDOW permission not granted")
+            return
+        }
+
         val density = resources.displayMetrics.density
         val screenWidth = resources.displayMetrics.widthPixels
         val displayHeight = resources.displayMetrics.heightPixels
@@ -148,17 +152,14 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             windowManager = windowManager,
             view = view,
             onClick = { togglePanel() },
-            onLongPress = { stopWithAnimation() },
+            onLongPress = {
+                    android.widget.Toast.makeText(this@OverlayService, getString(R.string.overlay_service_stopping), android.widget.Toast.LENGTH_SHORT).show()
+                    stopWithAnimation()
+                },
             onPositionChanged = {}
         )
 
         view.setOnTouchListener { _, event -> touchHandler?.handleTouchEvent(event) ?: false }
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
-            && !Settings.canDrawOverlays(this)) {
-            Log.w("Overlay", "SYSTEM_ALERT_WINDOW permission not granted")
-            return
-        }
 
         pillView = view
         windowManager.addView(view, params)
@@ -171,7 +172,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         val now = System.currentTimeMillis()
         if (now - panelCloseTime < PANEL_TOGGLE_DEBOUNCE_MS) return
 
-        if (_uiState.value.isPanelVisible) {
+        if (overlayController.uiState.value.isPanelVisible) {
             hidePanel()
         } else {
             showPanel()
@@ -179,19 +180,22 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     }
 
     private fun hidePanel() {
-        cancelTranslate()
-        _uiState.update { it.copy(isPanelVisible = false) }
+        overlayController.cancelTranslate()
+        overlayController.setPanelVisible(false)
         panelCloseTime = System.currentTimeMillis()
     }
 
     private fun showPanel() {
         if (panelView != null) {
             isStopping = false
-            _uiState.update { it.copy(isPanelVisible = true) }
+            overlayController.setPanelVisible(true)
             return
         }
         val density = resources.displayMetrics.density
-        val panelWidth = (resources.displayMetrics.widthPixels - 64 * density).toInt()
+        val panelWidth = minOf(
+            (resources.displayMetrics.widthPixels - 64 * density).toInt(),
+            (420 * density).toInt()
+        )
 
         val params = WindowManager.LayoutParams(
             panelWidth,
@@ -211,29 +215,31 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             setViewTreeSavedStateRegistryOwner(this@OverlayService)
             setContent {
                 XiTheme {
-                    val state by uiState.collectAsState()
+                    val state by overlayController.uiState.collectAsStateWithLifecycle()
                     val context = this@OverlayService
                     TranslationPanelContent(
                         visible = state.isPanelVisible,
                         inputText = state.inputText,
-                        onInputChange = { text -> _uiState.update { it.copy(inputText = text) } },
+                        onInputChange = { text -> overlayController.updateInputText(text) },
                         resultText = state.resultText,
+                        usage = state.usage,
                         isTranslating = state.isTranslating,
                         isModelDownloading = state.isModelDownloading,
                         error = state.errorMsg?.asString(context),
                         sourceLang = state.sourceLang,
                         targetLang = state.targetLang,
                         engine = state.engine,
-                        onTranslate = { doTranslate() },
-                        onSwap = { swapOverlayLanguages() },
+                        thinkingLevel = state.thinkingLevel,
+                        onTranslate = { overlayController.translate() },
+                        onSwap = { overlayController.swapLanguages() },
                         onCopy = { copyResult() },
                         onDismiss = { hidePanel() },
                         onStop = {
-                            _uiState.update { it.copy(isPanelVisible = false) }
+                            overlayController.setPanelVisible(false)
                             isStopping = true
                         },
                         onLaunchEssay = {
-                            _uiState.update { it.copy(isPanelVisible = false) }
+                            overlayController.setPanelVisible(false)
                             val mainIntent = Intent(this@OverlayService, luzzr.xi.MainActivity::class.java).apply {
                                 putExtra("target_screen", "essay")
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -245,21 +251,23 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                             removePanelPhysical()
                             if (isStopping) stopSelf()
                         },
-                        onSourceLangChange = { lang -> _uiState.update { it.copy(sourceLang = lang) } },
-                        onTargetLangChange = { lang -> _uiState.update { it.copy(targetLang = lang) } },
-                        onEngineChange = { eng -> _uiState.update { it.copy(engine = eng) } }
+                        onSourceLangChange = { lang -> overlayController.updateSourceLang(lang) },
+                        onTargetLangChange = { lang -> overlayController.updateTargetLang(lang) },
+                        onEngineChange = { eng -> overlayController.updateEngine(eng) },
+                        onThinkingLevelChange = { lvl -> overlayController.updateThinkingLevel(lvl) }
                     )
                 }
             }
         }
 
         panelView = view
-        _uiState.update { it.copy(isPanelVisible = true) }
+        overlayController.setPanelVisible(true)
         windowManager.addView(view, params)
 
         panelView?.setOnTouchListener { _, event ->
             if (event.action == android.view.MotionEvent.ACTION_OUTSIDE) {
-                hidePanel()
+                overlayController.setPanelVisible(false)
+                panelCloseTime = System.currentTimeMillis()
                 true
             } else false
         }
@@ -268,19 +276,14 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     // ── Stop flow ──────────────────────────────────────────────
 
     private fun stopWithAnimation() {
-        cancelTranslate()
-        if (_uiState.value.isPanelVisible) {
+        overlayController.cancelTranslate()
+        if (overlayController.uiState.value.isPanelVisible) {
             isStopping = true
-            _uiState.update { it.copy(isPanelVisible = false) }
+            overlayController.setPanelVisible(false)
             // onExitAnimationFinished will call stopSelf()
         } else {
             stopSelf()
         }
-    }
-
-    private fun cancelTranslate() {
-        translateJob?.cancel()
-        translateJob = null
     }
 
     private fun removePanelPhysical() {
@@ -309,8 +312,8 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             val density = resources.displayMetrics.density
             val screenWidth = resources.displayMetrics.widthPixels
             val displayHeight = resources.displayMetrics.heightPixels
-            val bubbleSizePx = (36 * density).toInt()
-            val marginPx = (6 * density).toInt()
+            val bubbleSizePx = (BUBBLE_SIZE_DP * density).toInt()
+            val marginPx = (EDGE_MARGIN_DP * density).toInt()
 
             val params = view.layoutParams as WindowManager.LayoutParams
             // Keep bubble on right edge, clamp Y to new height
@@ -323,66 +326,15 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             }
         }
         // Hide panel on rotation to avoid size mismatch
-        if (_uiState.value.isPanelVisible) {
+        if (overlayController.uiState.value.isPanelVisible) {
             hidePanel()
         }
     }
 
     // ── Business logic ────────────────────────────────────────
 
-    private fun doTranslate() {
-        val text = _uiState.value.inputText.trim()
-        if (text.isEmpty()) {
-            _uiState.update { it.copy(errorMsg = UiText.StringResource(R.string.translate_error_empty)) }
-            return
-        }
-
-        cancelTranslate()
-        translateJob = serviceScope.launch {
-            _uiState.update { it.copy(isTranslating = true, isModelDownloading = false, errorMsg = null, resultText = "") }
-            try {
-                val engine = _uiState.value.engine
-
-                // Show model downloading state for ML Kit
-                if (engine == TranslationEngine.MLKIT) {
-                    _uiState.update { it.copy(isModelDownloading = true) }
-                }
-
-                val result = translateUseCase(
-                    text = text,
-                    sourceLang = _uiState.value.sourceLang.displayName,
-                    targetLang = _uiState.value.targetLang.displayName,
-                    engine = engine,
-                    thinkingLevelId = settingsDataStore.settings.first().translateThinkingLevel
-                )
-
-                result.fold(
-                    onSuccess = { res -> _uiState.update { it.copy(resultText = res) } },
-                    onFailure = { err -> _uiState.update { it.copy(errorMsg = UiText.DynamicString(err.message ?: getString(R.string.error_network))) } }
-                )
-            } catch (e: CancellationException) {
-                // Cancelled — silent
-            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                _uiState.update { it.copy(errorMsg = UiText.StringResource(R.string.error_translate_timeout)) }
-            } finally {
-                _uiState.update { it.copy(isTranslating = false, isModelDownloading = false) }
-            }
-        }
-    }
-
-    private fun swapOverlayLanguages() {
-        _uiState.update {
-            it.copy(
-                sourceLang = it.targetLang,
-                targetLang = it.sourceLang,
-                inputText = it.resultText,
-                resultText = it.inputText
-            )
-        }
-    }
-
     private fun copyResult() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("translation", _uiState.value.resultText))
+        clipboard.setPrimaryClip(ClipData.newPlainText("translation", overlayController.uiState.value.resultText))
     }
 }

@@ -15,6 +15,12 @@ interface OpenAiApi {
         @Body request: ChatRequest
     ): ChatResponse
 
+    @retrofit2.http.Streaming
+    @POST("chat/completions")
+    suspend fun streamChatCompletions(
+        @Body request: ChatRequest
+    ): okhttp3.ResponseBody
+
     @GET("models")
     suspend fun listModels(): ModelListResponse
 }

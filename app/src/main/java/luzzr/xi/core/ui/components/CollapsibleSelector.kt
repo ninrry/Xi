@@ -7,7 +7,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,14 +32,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import luzzr.xi.R
 import luzzr.xi.core.ui.theme.AbstractIcons
 import luzzr.xi.core.ui.theme.AppShape
+import luzzr.xi.core.ui.theme.AppSpacing
+import luzzr.xi.core.ui.theme.MotionTokens
+import luzzr.xi.core.ui.components.PressScaleBox
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -53,10 +54,11 @@ fun <T> CollapsibleSelector(
     modifier: Modifier = Modifier
 ) {
     var showOptions by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+    val collapseDescription = stringResource(R.string.semantics_collapse_options)
+    val expandDescription = stringResource(R.string.semantics_expand_options)
     val arrowRotation by animateFloatAsState(
         targetValue = if (showOptions) 180f else 0f,
-        animationSpec = spring(stiffness = 300f),
+        animationSpec = MotionTokens.springDefault(),
         label = "arrow_rotation"
     )
 
@@ -66,32 +68,37 @@ fun <T> CollapsibleSelector(
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.card)
     ) {
-        Row(
+        PressScaleBox(
+            onClick = { showOptions = !showOptions },
+            onPressScale = 0.98f,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = { showOptions = !showOptions })
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.md)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                icon()
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    getDisplayName(currentValue), fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                AbstractIcons.ArrowDropDown(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .graphicsLayer { rotationZ = arrowRotation }
-                        .semantics { contentDescription = if (showOptions) context.getString(R.string.semantics_collapse_options) else context.getString(R.string.semantics_expand_options) },
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    icon()
+                    Spacer(modifier = Modifier.width(AppSpacing.xs))
+                    Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        getDisplayName(currentValue), style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(AppSpacing.xs))
+                    AbstractIcons.ArrowDropDown(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .graphicsLayer { rotationZ = arrowRotation }
+                            .semantics { contentDescription = if (showOptions) collapseDescription else expandDescription },
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 
@@ -103,27 +110,25 @@ fun <T> CollapsibleSelector(
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    .padding(start = AppSpacing.lg, end = AppSpacing.lg, bottom = AppSpacing.md),
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
             ) {
                 values.forEach { value ->
                     val isSelected = value == currentValue
-                    Box(
+                    PressScaleBox(
+                        onClick = { onValueChange(value); showOptions = false },
                         modifier = Modifier
                             .clip(AppShape.small)
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background)
                             .border(0.5.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, AppShape.small)
-                            .clickable(onClick = { onValueChange(value); showOptions = false })
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                            .semantics { contentDescription = getDisplayName(value) },
-                        contentAlignment = Alignment.Center
+                            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
+                            .semantics { contentDescription = getDisplayName(value) }
                     ) {
                         Text(
                             text = getDisplayName(value),
-                            fontSize = 12.sp,
-                            color = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground,
-                            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+                            style = if (isSelected) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
+                            color = if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }

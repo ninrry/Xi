@@ -10,7 +10,7 @@ class AppSettingsTest {
     @Test
     fun `default settings have correct values`() {
         val settings = AppSettings()
-        assertEquals("https://opencode.ai/zen/go/v1", settings.apiBaseUrl)
+        assertEquals("https://api.xiaomimimo.com/v1", settings.apiBaseUrl)
         assertEquals("", settings.apiKey)
         assertEquals("mimo-v2.5", settings.model)
         assertFalse(settings.proxyEnabled)

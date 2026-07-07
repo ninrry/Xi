@@ -1,5 +1,6 @@
 package luzzr.xi.feature.overlay
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
@@ -17,6 +18,7 @@ class OverlayTileService : TileService() {
         updateTileState()
     }
 
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     override fun onClick() {
         super.onClick()
         if (!Settings.canDrawOverlays(this)) {

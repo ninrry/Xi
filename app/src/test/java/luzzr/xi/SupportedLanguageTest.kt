@@ -47,6 +47,6 @@ class SupportedLanguageTest {
             SupportedLanguage.entries.size,
             codes.toSet().size
         )
-        assertTrue("All codes should be 2-letter strings", codes.all { it.length == 2 })
+        assertTrue("All non-auto codes should be 2-letter strings", codes.filter { it != "auto" }.all { it.length == 2 })
     }
 }

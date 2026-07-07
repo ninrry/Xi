@@ -23,15 +23,8 @@ android {
         applicationId = "luzzr.xi"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.0.1"
-
-        // NOTE: 分离架构打包 —— 每次只打一种架构
-        // arm64-v8a: 真机; x86_64: 模拟器
-        // 禁止同时打包多种架构！
-        ndk {
-            abiFilters += listOf("arm64-v8a")
-        }
+        versionCode = 8
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -49,11 +42,15 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            ndk {
+                abiFilters += listOf("arm64-v8a")
+            }
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
@@ -91,6 +88,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
     implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.navigation.compose)
 
@@ -117,11 +115,6 @@ dependencies {
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
 
-    // Room (unused - kept for future migration)
-    // implementation(libs.room.runtime)
-    // implementation(libs.room.ktx)
-    // ksp(libs.room.compiler)
-
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
@@ -130,7 +123,9 @@ dependencies {
     testImplementation(libs.arch.core.testing)
 
     // Compose UI Testing
+    androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(platform(libs.compose.bom))
     debugImplementation(libs.compose.ui.test.manifest)
     androidTestImplementation(libs.hilt.android.testing)
 }

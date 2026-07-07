@@ -6,6 +6,7 @@ build
 captures
 local.properties
 keystore.jks
+keystore.properties
 key.properties
 .codegraph
 .omo

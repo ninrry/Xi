@@ -5,7 +5,8 @@ import com.google.gson.annotations.SerializedName
 data class TranslationResult(
     @SerializedName("translation") val translation: String?,
     @SerializedName("detected_language") val detectedLanguage: String? = null,
-    @SerializedName("alternatives") val alternatives: List<String>? = null
+    @SerializedName("alternatives") val alternatives: List<String>? = null,
+    @Transient var usage: Usage? = null
 )
 
 data class EssayCorrectionJson(
@@ -16,7 +17,8 @@ data class EssayCorrectionJson(
     @SerializedName("score") val score: ScoreBreakdown? = null,
     @SerializedName("corrected_essay") val correctedEssay: String? = null,
     @SerializedName("writing_tips") val writingTips: List<String>? = null,
-    @SerializedName("error") val error: String? = null
+    @SerializedName("error") val error: String? = null,
+    @Transient var usage: Usage? = null
 )
 
 data class GrammarError(

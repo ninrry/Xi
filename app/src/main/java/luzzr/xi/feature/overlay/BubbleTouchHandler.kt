@@ -55,6 +55,9 @@ internal class BubbleTouchHandler(
     private var downTime = 0L
     private var isDragging = false
     private var hasTriggeredLongPress = false
+    private var lastUpdateMs = 0L
+    private var lastX = 0
+    private var lastY = 0
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private var longPressRunnable: Runnable? = null
@@ -126,9 +129,15 @@ internal class BubbleTouchHandler(
                     // Clamp Y: keep bubble within safe zone
                     params.y = newY.coerceIn(safeMarginPx, displayHeight - bubbleSizePx - safeMarginPx)
 
-                    try {
-                        windowManager.updateViewLayout(view, params)
-                    } catch (_: Exception) { }
+                    val now = System.currentTimeMillis()
+                    if (now - lastUpdateMs > 16 && (newX != lastX || newY != lastY)) {
+                        lastUpdateMs = now
+                        lastX = newX
+                        lastY = newY
+                        try {
+                            windowManager.updateViewLayout(view, params)
+                        } catch (_: Exception) { }
+                    }
                 }
                 return true
             }
@@ -182,13 +191,10 @@ internal class BubbleTouchHandler(
         onPositionChanged()
     }
 
-    private fun cancelLongPress() {
+    fun cancelLongPress() {
         longPressRunnable?.let { mainHandler.removeCallbacks(it) }
         longPressRunnable = null
     }
-
-    fun resetAutoHideTimer() {}
-    fun cancelAutoHide() {}
 
     fun positionAtRightEdge() {
         params.x = screenWidth - bubbleSizePx - edgeMarginPx

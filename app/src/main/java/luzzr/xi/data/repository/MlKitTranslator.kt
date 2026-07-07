@@ -3,8 +3,8 @@ package luzzr.xi.data.repository
 import android.content.Context
 import android.util.Log
 import luzzr.xi.R
+import luzzr.xi.domain.model.SupportedLanguage
 import com.google.mlkit.common.model.DownloadConditions
-import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.TranslatorOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,36 +18,17 @@ import kotlin.coroutines.resume
 class MlKitTranslator @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val languageMap = mapOf(
-        "Chinese" to TranslateLanguage.CHINESE,
-        "English" to TranslateLanguage.ENGLISH,
-        "Japanese" to TranslateLanguage.JAPANESE,
-        "Korean" to TranslateLanguage.KOREAN,
-        "Spanish" to TranslateLanguage.SPANISH,
-        "French" to TranslateLanguage.FRENCH,
-        "German" to TranslateLanguage.GERMAN,
-        "Italian" to TranslateLanguage.ITALIAN,
-        "Portuguese" to TranslateLanguage.PORTUGUESE,
-        "Russian" to TranslateLanguage.RUSSIAN,
-        "Arabic" to TranslateLanguage.ARABIC,
-        "Hindi" to TranslateLanguage.HINDI,
-        "Thai" to TranslateLanguage.THAI,
-        "Vietnamese" to TranslateLanguage.VIETNAMESE,
-        "Indonesian" to TranslateLanguage.INDONESIAN,
-        "Turkish" to TranslateLanguage.TURKISH,
-        "Dutch" to TranslateLanguage.DUTCH,
-        "Polish" to TranslateLanguage.POLISH,
-        "Swedish" to TranslateLanguage.SWEDISH,
-        "Ukrainian" to TranslateLanguage.UKRAINIAN
-    )
+    private fun getMlKitCode(lang: String): String? {
+        return SupportedLanguage.entries.find { it.displayName == lang }?.mlKitLangCode
+    }
 
     suspend fun translate(
         text: String,
         sourceLang: String,
         targetLang: String
     ): Result<String> {
-        val sourceCode = languageMap[sourceLang]
-        val targetCode = languageMap[targetLang]
+        val sourceCode = getMlKitCode(sourceLang)
+        val targetCode = getMlKitCode(targetLang)
 
         if (sourceCode == null || targetCode == null) {
             return Result.failure(Exception("Unsupported language: $sourceLang -> $targetLang"))
@@ -68,31 +49,38 @@ class MlKitTranslator @Inject constructor(
             try {
                 withTimeout(25_000L) {
                     suspendCancellableCoroutine { cont ->
-                        translator.downloadModelIfNeeded(conditions)
-                            .addOnSuccessListener {
-                                translator.translate(text)
-                                    .addOnSuccessListener { result ->
-                                        if (!translatorClosed) {
-                                            translator.close()
-                                            translatorClosed = true
+                        fun doDownload(attempt: Int) {
+                            translator.downloadModelIfNeeded(conditions)
+                                .addOnSuccessListener {
+                                    translator.translate(text)
+                                        .addOnSuccessListener { result ->
+                                            if (!translatorClosed) {
+                                                translator.close()
+                                                translatorClosed = true
+                                            }
+                                            if (cont.isActive) cont.resume(Result.success(result))
                                         }
-                                        if (cont.isActive) cont.resume(Result.success(result))
-                                    }
-                                    .addOnFailureListener { e ->
+                                        .addOnFailureListener { e ->
+                                            if (!translatorClosed) {
+                                                translator.close()
+                                                translatorClosed = true
+                                            }
+                                            if (cont.isActive) cont.resume(Result.failure(e))
+                                        }
+                                }
+                                .addOnFailureListener { e ->
+                                    if (attempt < 1 && cont.isActive) {
+                                        doDownload(attempt + 1)
+                                    } else {
                                         if (!translatorClosed) {
                                             translator.close()
                                             translatorClosed = true
                                         }
                                         if (cont.isActive) cont.resume(Result.failure(e))
                                     }
-                            }
-                            .addOnFailureListener { e ->
-                                if (!translatorClosed) {
-                                    translator.close()
-                                    translatorClosed = true
                                 }
-                                if (cont.isActive) cont.resume(Result.failure(e))
-                            }
+                        }
+                        doDownload(0)
 
                         cont.invokeOnCancellation {
                             if (!translatorClosed) {
@@ -102,6 +90,8 @@ class MlKitTranslator @Inject constructor(
                         }
                     }
                 }
+            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                Result.failure(Exception(context.getString(R.string.error_mlkit_timeout)))
             } finally {
                 if (!translatorClosed) {
                     translator.close()
@@ -115,5 +105,5 @@ class MlKitTranslator @Inject constructor(
         }
     }
 
-    fun isLanguageSupported(lang: String): Boolean = languageMap.containsKey(lang)
+    fun isLanguageSupported(lang: String): Boolean = getMlKitCode(lang) != null
 }

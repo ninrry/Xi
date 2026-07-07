@@ -8,28 +8,30 @@ package luzzr.xi.domain.model
 enum class SupportedLanguage(
     val code: String,
     val displayName: String,
-    val nativeName: String
+    val nativeName: String,
+    val mlKitLangCode: String? = null
 ) {
-    CHINESE("zh", "Chinese", "中文"),
-    ENGLISH("en", "English", "English"),
-    JAPANESE("ja", "Japanese", "日本語"),
-    KOREAN("ko", "Korean", "한국어"),
-    SPANISH("es", "Spanish", "Español"),
-    FRENCH("fr", "French", "Français"),
-    GERMAN("de", "German", "Deutsch"),
-    ITALIAN("it", "Italian", "Italiano"),
-    PORTUGUESE("pt", "Portuguese", "Português"),
-    RUSSIAN("ru", "Russian", "Русский"),
-    ARABIC("ar", "Arabic", "العربية"),
-    HINDI("hi", "Hindi", "हिन्दी"),
-    THAI("th", "Thai", "ไทย"),
-    VIETNAMESE("vi", "Vietnamese", "Tiếng Việt"),
-    INDONESIAN("id", "Indonesian", "Bahasa Indonesia"),
-    TURKISH("tr", "Turkish", "Türkçe"),
-    DUTCH("nl", "Dutch", "Nederlands"),
-    POLISH("pl", "Polish", "Polski"),
-    SWEDISH("sv", "Swedish", "Svenska"),
-    UKRAINIAN("uk", "Ukrainian", "Українська");
+    AUTO("auto", "Auto Detect", "自动检测", null),
+    CHINESE("zh", "Chinese", "中文", "zh"),
+    ENGLISH("en", "English", "English", "en"),
+    JAPANESE("ja", "Japanese", "日本語", "ja"),
+    KOREAN("ko", "Korean", "한국어", "ko"),
+    SPANISH("es", "Spanish", "Español", "es"),
+    FRENCH("fr", "French", "Français", "fr"),
+    GERMAN("de", "German", "Deutsch", "de"),
+    ITALIAN("it", "Italian", "Italiano", "it"),
+    PORTUGUESE("pt", "Portuguese", "Português", "pt"),
+    RUSSIAN("ru", "Russian", "Русский", "ru"),
+    ARABIC("ar", "Arabic", "العربية", "ar"),
+    HINDI("hi", "Hindi", "हिन्दी", "hi"),
+    THAI("th", "Thai", "ไทย", "th"),
+    VIETNAMESE("vi", "Vietnamese", "Tiếng Việt", "vi"),
+    INDONESIAN("id", "Indonesian", "Bahasa Indonesia", "id"),
+    TURKISH("tr", "Turkish", "Türkçe", "tr"),
+    DUTCH("nl", "Dutch", "Nederlands", "nl"),
+    POLISH("pl", "Polish", "Polski", "pl"),
+    SWEDISH("sv", "Swedish", "Svenska", "sv"),
+    UKRAINIAN("uk", "Ukrainian", "Українська", "uk");
 
     companion object {
         fun getByCode(code: String): SupportedLanguage {

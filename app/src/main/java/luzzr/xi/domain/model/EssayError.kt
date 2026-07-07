@@ -20,7 +20,4 @@ sealed class EssayError : Exception() {
         override val message: String = "PDF_UNREADABLE"
     }
     
-    data class Unknown(override val cause: Throwable?) : EssayError() {
-        override val message: String = "UNKNOWN"
-    }
 }

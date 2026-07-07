@@ -24,6 +24,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
+import luzzr.xi.core.testing.MainDispatcherRule
 import org.junit.Test
 import java.io.InputStream
 
@@ -37,7 +38,7 @@ import java.io.InputStream
 class MediaProcessorTest {
 
     @get:Rule
-    val testDispatcherRule = TestDispatcherRule()
+    val testDispatcherRule = MainDispatcherRule()
 
     private val context = mockk<Context>()
     private val contentResolver = mockk<ContentResolver>()
@@ -55,6 +56,9 @@ class MediaProcessorTest {
         every { Log.e(any<String>(), any<String>(), any<Throwable>()) } returns 0
         every { Log.w(any<String>(), any<String>()) } returns 0
         every { Log.w(any<String>(), any<String>(), any<Throwable>()) } returns 0
+
+        mockkStatic(android.util.Base64::class)
+        every { android.util.Base64.encodeToString(any(), any()) } returns "mock_base64"
 
         processor = MediaProcessor(context)
     }
@@ -90,7 +94,7 @@ class MediaProcessorTest {
         every { stream.close() } returns Unit
 
         mockkStatic(BitmapFactory::class)
-        every { BitmapFactory.decodeStream(stream) } returns null
+        every { BitmapFactory.decodeStream(any(), any(), any()) } returns null
 
         // When: loadBitmapFromUri is called
         val result = processor.loadBitmapFromUri(uri)
@@ -112,7 +116,16 @@ class MediaProcessorTest {
         every { stream.close() } returns Unit
 
         mockkStatic(BitmapFactory::class)
-        every { BitmapFactory.decodeStream(stream) } returns original
+        every { BitmapFactory.decodeStream(any(), any(), any()) } answers {
+            val options = arg<BitmapFactory.Options>(2)
+            if (options.inJustDecodeBounds) {
+                options.outWidth = 500
+                options.outHeight = 500
+                null
+            } else {
+                original
+            }
+        }
 
         // When: loadBitmapFromUri is called with maxSize=800
         val result = processor.loadBitmapFromUri(uri, maxSize = 800)
@@ -136,7 +149,16 @@ class MediaProcessorTest {
         every { stream.close() } returns Unit
 
         mockkStatic(BitmapFactory::class)
-        every { BitmapFactory.decodeStream(stream) } returns original
+        every { BitmapFactory.decodeStream(any(), any(), any()) } answers {
+            val options = arg<BitmapFactory.Options>(2)
+            if (options.inJustDecodeBounds) {
+                options.outWidth = 1600
+                options.outHeight = 1200
+                null
+            } else {
+                original
+            }
+        }
         mockkStatic(Bitmap::class)
         every { Bitmap.createScaledBitmap(original, 800, 600, true) } returns scaled
 
@@ -162,37 +184,37 @@ class MediaProcessorTest {
     }
 
     // -----------------------------------------------------------------
-    // renderPdfPages
+    // renderPdfPagesAsBase64
     // -----------------------------------------------------------------
 
     @Test
-    fun `renderPdfPages returns empty list when pfd is null`() = runTest {
+    fun `renderPdfPagesAsBase64 returns empty list when pfd is null`() = runTest {
         // Given: ContentResolver returns a null ParcelFileDescriptor
         val uri = mockk<Uri>()
         every { contentResolver.openFileDescriptor(uri, "r") } returns null
 
-        // When: renderPdfPages is called
-        val result = processor.renderPdfPages(uri)
+        // When: renderPdfPagesAsBase64 is called
+        val result = processor.renderPdfPagesAsBase64(uri)
 
         // Then: empty list
         assertTrue(result.isEmpty())
     }
 
     @Test
-    fun `renderPdfPages returns empty list on exception`() = runTest {
+    fun `renderPdfPagesAsBase64 returns empty list on exception`() = runTest {
         // Given: opening the file descriptor throws
         val uri = mockk<Uri>()
         every { contentResolver.openFileDescriptor(uri, "r") } throws RuntimeException("boom")
 
-        // When: renderPdfPages is called
-        val result = processor.renderPdfPages(uri)
+        // When: renderPdfPagesAsBase64 is called
+        val result = processor.renderPdfPagesAsBase64(uri)
 
         // Then: empty list
         assertTrue(result.isEmpty())
     }
 
     @Test
-    fun `renderPdfPages respects maxPages limit`() = runTest {
+    fun `renderPdfPagesAsBase64 respects maxPages limit`() = runTest {
         // Given: a PDF with 5 pages, maxPages=2
         val uri = mockk<Uri>()
         val pfd = mockk<ParcelFileDescriptor>(relaxed = true)
@@ -216,17 +238,18 @@ class MediaProcessorTest {
         mockkStatic(Bitmap::class)
         every { Bitmap.createBitmap(any(), any(), any()) } returnsMany listOf(bitmap0, bitmap1)
 
-        // When: renderPdfPages is called with maxPages=2
-        val result = processor.renderPdfPages(uri, maxPages = 2)
+        // When: renderPdfPagesAsBase64 is called with maxPages=2
+        val result = processor.renderPdfPagesAsBase64(uri, maxPages = 2)
 
-        // Then: exactly 2 bitmaps returned, page 2 is never opened
+        // Then: exactly 2 base64 strings returned, page 2 is never opened
         assertEquals(2, result.size)
+        assertEquals("mock_base64", result[0])
         verify(exactly = 0) { anyConstructed<PdfRenderer>().openPage(2) }
     }
 
     @Test
-    fun `renderPdfPages applies scale factor`() = runTest {
-        // Given: a 1-page PDF, page 100x200, scale=2.0 → bitmap 200x400
+    fun `renderPdfPagesAsBase64 applies scale factor`() = runTest {
+        // Given: a 1-page PDF, page 100x200, scale=2.0 -> bitmap 200x400
         val uri = mockk<Uri>()
         val pfd = mockk<ParcelFileDescriptor>(relaxed = true)
         every { contentResolver.openFileDescriptor(uri, "r") } returns pfd
@@ -244,12 +267,12 @@ class MediaProcessorTest {
         mockkStatic(Bitmap::class)
         every { Bitmap.createBitmap(200, 400, Bitmap.Config.ARGB_8888) } returns bitmap
 
-        // When: renderPdfPages is called with scale=2.0f
-        val result = processor.renderPdfPages(uri, scale = 2.0f)
+        // When: renderPdfPagesAsBase64 is called with scale=2.0f
+        val result = processor.renderPdfPagesAsBase64(uri, scale = 2.0f)
 
-        // Then: bitmap created with scaled dimensions and returned
+        // Then: bitmap created with scaled dimensions and base64 returned
         assertEquals(1, result.size)
-        assertSame(bitmap, result[0])
+        assertEquals("mock_base64", result[0])
         verify { Bitmap.createBitmap(200, 400, Bitmap.Config.ARGB_8888) }
     }
 }

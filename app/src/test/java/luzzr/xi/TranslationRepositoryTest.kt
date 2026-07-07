@@ -5,8 +5,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -14,9 +12,11 @@ import kotlinx.coroutines.test.runTest
 import luzzr.xi.core.network.ApiProvider
 import luzzr.xi.core.network.NetworkCheck
 import luzzr.xi.core.network.OpenAiApi
+import luzzr.xi.core.provider.ProviderConfig
 import luzzr.xi.data.cache.TranslationCache
 import luzzr.xi.core.datastore.AppSettings
 import luzzr.xi.core.datastore.SettingsDataStore
+import luzzr.xi.data.repository.JsonResponseParser
 import luzzr.xi.domain.model.ChatMessage
 import luzzr.xi.domain.model.ChatResponse
 import luzzr.xi.domain.model.Choice
@@ -28,27 +28,28 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
+import luzzr.xi.core.testing.MainDispatcherRule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TranslationRepositoryTest {
 
     @get:Rule
-    val testDispatcherRule = TestDispatcherRule()
+    val testDispatcherRule = MainDispatcherRule()
 
     private val context = mockk<Context>(relaxed = true)
     private val settingsDataStore = mockk<SettingsDataStore>(relaxed = true)
     private val openAiApi = mockk<OpenAiApi>()
     private val translationCache = TranslationCache()
+    private val apiProvider = mockk<ApiProvider>()
+    private val networkCheck = mockk<NetworkCheck>()
+    private val jsonParser = JsonResponseParser()
 
     private lateinit var repository: TranslationRepository
 
     @Before
     fun setUp() {
-        mockkObject(ApiProvider)
-        mockkObject(NetworkCheck)
-
-        every { NetworkCheck.isNetworkAvailable(any()) } returns true
+        every { networkCheck.isNetworkAvailable() } returns true
 
         every { settingsDataStore.settings } returns flowOf(
             AppSettings(apiKey = "test-api-key", model = "test-model")
@@ -57,24 +58,15 @@ class TranslationRepositoryTest {
         every { context.getString(R.string.error_translate_result_empty) } returns "翻译结果为空"
         every { context.getString(R.string.error_empty_key) } returns "请先在设置中填写 API Key"
         every { context.getString(R.string.error_parse_failed) } returns "AI 返回格式异常，请重试"
-        every { context.getString(R.string.error_translation_empty) } returns "翻译结果为空，请重试"
         every { context.getString(R.string.error_invalid_json) } returns "AI 返回无效格式，请重试"
 
         every {
-            ApiProvider.createApi(any(), any(), any(), any(), any(), any())
+            apiProvider.createApi(any<ProviderConfig>(), any(), any(), any(), any(), any())
         } returns openAiApi
 
         translationCache.clear()
-        repository = TranslationRepository(context, settingsDataStore, translationCache)
+        repository = TranslationRepository(context, settingsDataStore, apiProvider, networkCheck, translationCache, jsonParser)
     }
-
-    @After
-    fun tearDown() {
-        unmockkObject(ApiProvider)
-        unmockkObject(NetworkCheck)
-    }
-
-    // --- Helpers ---
 
     private fun successResponse(content: String): ChatResponse = ChatResponse(
         id = "chatcmpl-translate-test",
@@ -97,8 +89,6 @@ class TranslationRepositoryTest {
         return """{"translation": "$translation", "detected_language": "$detectedLanguage", "alternatives": [$alt]}"""
     }
 
-    // --- Tests ---
-
     @Test
     fun `translate returns success with parsed translation`() = runTest {
         coEvery { openAiApi.chatCompletions(any()) } returns successResponse(
@@ -108,7 +98,7 @@ class TranslationRepositoryTest {
         val result = repository.translate("Hello World")
 
         assertTrue("Expected success but got $result", result.isSuccess)
-        assertEquals("你好世界", result.getOrNull())
+        assertEquals("你好世界", result.getOrNull()?.translation)
     }
 
     @Test
@@ -192,7 +182,7 @@ class TranslationRepositoryTest {
         repository.translate("World")
 
         verify(exactly = 1) {
-            ApiProvider.createApi(any(), any(), any(), any(), any(), any())
+            apiProvider.createApi(any<ProviderConfig>(), any(), any(), any(), any(), any())
         }
     }
 
@@ -209,7 +199,7 @@ class TranslationRepositoryTest {
         repository.translate("World")
 
         verify(exactly = 2) {
-            ApiProvider.createApi(any(), any(), any(), any(), any(), any())
+            apiProvider.createApi(any<ProviderConfig>(), any(), any(), any(), any(), any())
         }
     }
 
@@ -260,7 +250,7 @@ class TranslationRepositoryTest {
             jsonTranslationResponse("translated")
         )
 
-        repository.translate("Hello World")
+        repository.translate("Hello World", "English", "Chinese", null)
 
         coVerify {
             openAiApi.chatCompletions(match {
@@ -274,7 +264,7 @@ class TranslationRepositoryTest {
     fun `translate returns ParseError for invalid JSON`() = runTest {
         coEvery { openAiApi.chatCompletions(any()) } returns successResponse("not valid json {{{")
 
-        val result = repository.translate("Hello")
+        val result = repository.translate("Hello", "English", "Chinese", null)
 
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is AppError.ParseError)
@@ -286,7 +276,7 @@ class TranslationRepositoryTest {
             """{"translation": "", "detected_language": "English", "alternatives": []}"""
         )
 
-        val result = repository.translate("Hello")
+        val result = repository.translate("Hello", "English", "Chinese", null)
 
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is AppError.ParseError)

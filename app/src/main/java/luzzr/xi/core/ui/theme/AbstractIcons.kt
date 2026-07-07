@@ -13,6 +13,10 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+
 /**
  * Abstract stroke-based icons — hand-drawn line art.
  *
@@ -20,17 +24,22 @@ import androidx.compose.ui.graphics.drawscope.Stroke
  * - Uniform 0.07f stroke width ratio
  * - StrokeCap.Round + StrokeJoin.Round everywhere (hand-drawn feel)
  * - Generous proportions, icons fill the canvas with breathing room
- * - Low-saturation warm brown default tint (#8B7355)
+ * - Uses MaterialTheme.colorScheme.primary as default tint
  * - No filled shapes unless semantically required (pupil dot, etc.)
  */
 object AbstractIcons {
 
     @Composable
-    fun Translate(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Translate(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
-            val sw = s * 0.065f
+            val sw = s * 0.07f
             val cx = center.x
             val cy = center.y
 
@@ -80,9 +89,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Edit(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Edit(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -103,11 +117,16 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Settings(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Settings(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
-            val sw = s * 0.065f
+            val sw = s * 0.07f
             val cx = center.x
             val cy = center.y
 
@@ -137,9 +156,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Sparkle(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Sparkle(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -158,9 +182,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Swap(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Swap(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -178,9 +207,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Copy(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Copy(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -198,9 +232,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Delete(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Delete(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -219,9 +258,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun CheckCircle(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun CheckCircle(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -236,9 +280,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Close(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Close(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -251,9 +300,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Camera(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Camera(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -271,9 +325,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Document(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Document(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -292,9 +351,15 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Visibility(modifier: Modifier = Modifier, tint: Color = Color.Unspecified, visible: Boolean = true) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Visibility(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        visible: Boolean = true,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -315,9 +380,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Gallery(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Gallery(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -337,9 +407,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun ArrowDropDown(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun ArrowDropDown(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -352,9 +427,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Refresh(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Refresh(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -373,9 +453,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun ErrorExclamation(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun ErrorExclamation(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -391,9 +476,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Download(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Download(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -410,9 +500,14 @@ object AbstractIcons {
     }
 
     @Composable
-    fun Stop(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Stop(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x
@@ -425,9 +520,14 @@ object AbstractIcons {
 
     /** Launch / open-app icon — arrow escaping a square */
     @Composable
-    fun Launch(modifier: Modifier = Modifier, tint: Color = Color.Unspecified) {
-        val c = if (tint == Color.Unspecified) Color(0xFF8B7355) else tint
-        Canvas(modifier = modifier) {
+    fun Launch(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalModifier = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalModifier) {
             val s = size.minDimension
             val sw = s * 0.07f
             val cx = center.x

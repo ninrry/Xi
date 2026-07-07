@@ -30,7 +30,13 @@ data class ChatRequest(
     @SerializedName("temperature") val temperature: Double = 0.3,
     @SerializedName("max_tokens") val maxTokens: Int = 4096,
     @SerializedName("reasoning_effort") val reasoningEffort: String? = null,
-    @SerializedName("response_format") val responseFormat: ResponseFormat? = null
+    @SerializedName("response_format") val responseFormat: ResponseFormat? = null,
+    @SerializedName("stream") val stream: Boolean? = null,
+    @SerializedName("stream_options") val streamOptions: StreamOptions? = null
+)
+
+data class StreamOptions(
+    @SerializedName("include_usage") val includeUsage: Boolean
 )
 
 data class ChatMessage(
@@ -51,7 +57,8 @@ data class ImageUrl(
 data class ChatResponse(
     @SerializedName("id") val id: String?,
     @SerializedName("choices") val choices: List<Choice>?,
-    @SerializedName("error") val error: ErrorBody?
+    @SerializedName("error") val error: ErrorBody?,
+    @SerializedName("usage") val usage: Usage? = null
 )
 
 data class Choice(
@@ -73,4 +80,26 @@ data class ModelListResponse(
 data class ModelInfo(
     @SerializedName("id") val id: String?,
     @SerializedName("owned_by") val ownedBy: String?
+)
+
+data class ChatStreamChunk(
+    @SerializedName("id") val id: String?,
+    @SerializedName("choices") val choices: List<StreamChoice>?,
+    @SerializedName("usage") val usage: Usage? = null
+)
+
+data class StreamChoice(
+    @SerializedName("index") val index: Int,
+    @SerializedName("delta") val delta: StreamDelta,
+    @SerializedName("finish_reason") val finishReason: String?
+)
+
+data class StreamDelta(
+    @SerializedName("content") val content: String?
+)
+
+data class Usage(
+    @SerializedName("prompt_tokens") val promptTokens: Int?,
+    @SerializedName("completion_tokens") val completionTokens: Int?,
+    @SerializedName("total_tokens") val totalTokens: Int?
 )

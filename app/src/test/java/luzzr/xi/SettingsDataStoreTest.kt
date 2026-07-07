@@ -1,6 +1,5 @@
 package luzzr.xi
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import io.mockk.*
@@ -23,13 +22,13 @@ class SettingsDataStoreTest {
     fun setUp() {
         val emptyPrefs = androidx.datastore.preferences.core.mutablePreferencesOf()
         every { dataStore.data } returns flowOf(emptyPrefs)
-        settingsDataStore = SettingsDataStore(mockk(relaxed = true), dataStore)
+        settingsDataStore = SettingsDataStore(dataStore)
     }
 
     @Test
     fun `settings emits default values for fresh install`() = runTest {
         val settings = settingsDataStore.settings.first()
-        assertEquals("https://opencode.ai/zen/go/v1", settings.apiBaseUrl)
+        assertEquals("https://api.xiaomimimo.com/v1", settings.apiBaseUrl)
         assertEquals("", settings.apiKey)
         assertEquals("mimo-v2.5", settings.model)
         assertFalse(settings.proxyEnabled)

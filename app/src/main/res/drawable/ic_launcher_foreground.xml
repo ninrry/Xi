@@ -8,10 +8,10 @@
     <path
         android:fillColor="#8B7355"
         android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
-    <!-- "L" letter stylized -->
+    <!-- "Xi" letter stylized -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,32L38,76L58,76L58,68L46,68L46,40L58,40L58,32Z"
+        android:pathData="M34,32L44,54L34,76L44,76L50,62L56,76L66,76L56,54L66,32L56,32L50,46L44,32Z"
         android:strokeWidth="0" />
     <!-- Wave accent -->
     <path

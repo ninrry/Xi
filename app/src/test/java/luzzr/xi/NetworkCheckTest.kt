@@ -6,7 +6,11 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import android.util.Log
 import luzzr.xi.core.network.NetworkCheck
+import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -18,9 +22,12 @@ class NetworkCheckTest {
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var network: Network
     private lateinit var capabilities: NetworkCapabilities
+    private lateinit var networkCheck: NetworkCheck
 
     @Before
     fun setup() {
+        mockkStatic(Log::class)
+        every { Log.w(any<String>(), any<String>(), any<Throwable>()) } returns 0
         context = mockk()
         connectivityManager = mockk()
         network = mockk()
@@ -29,15 +36,23 @@ class NetworkCheckTest {
         every {
             context.getSystemService(Context.CONNECTIVITY_SERVICE)
         } returns connectivityManager
+
+        networkCheck = NetworkCheck(context)
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Log::class)
     }
 
     @Test
-    fun `isNetworkAvailable returns true when network has internet capability`() {
+    fun `isNetworkAvailable returns true when network has internet and validated capability`() {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns true
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) } returns true
 
-        val result = NetworkCheck.isNetworkAvailable(context)
+        val result = networkCheck.isNetworkAvailable()
 
         assertTrue(result)
     }
@@ -46,7 +61,7 @@ class NetworkCheckTest {
     fun `isNetworkAvailable returns false when activeNetwork is null`() {
         every { connectivityManager.activeNetwork } returns null
 
-        val result = NetworkCheck.isNetworkAvailable(context)
+        val result = networkCheck.isNetworkAvailable()
 
         assertFalse(result)
     }
@@ -56,7 +71,7 @@ class NetworkCheckTest {
         every { connectivityManager.activeNetwork } returns network
         every { connectivityManager.getNetworkCapabilities(network) } returns null
 
-        val result = NetworkCheck.isNetworkAvailable(context)
+        val result = networkCheck.isNetworkAvailable()
 
         assertFalse(result)
     }
@@ -67,25 +82,25 @@ class NetworkCheckTest {
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns false
 
-        val result = NetworkCheck.isNetworkAvailable(context)
+        val result = networkCheck.isNetworkAvailable()
 
         assertFalse(result)
     }
 
     @Test
-    fun `isNetworkAvailable returns true on SecurityException`() {
+    fun `isNetworkAvailable returns false on SecurityException`() {
         every { connectivityManager.activeNetwork } throws SecurityException("Permission denied")
 
-        val result = NetworkCheck.isNetworkAvailable(context)
+        val result = networkCheck.isNetworkAvailable()
 
-        assertTrue(result)
+        assertFalse(result)
     }
 
     @Test
     fun `isNetworkAvailable returns false on generic Exception`() {
         every { connectivityManager.activeNetwork } throws RuntimeException("Unexpected error")
 
-        val result = NetworkCheck.isNetworkAvailable(context)
+        val result = networkCheck.isNetworkAvailable()
 
         assertFalse(result)
     }

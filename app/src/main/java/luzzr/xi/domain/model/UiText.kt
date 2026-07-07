@@ -13,7 +13,10 @@ sealed class UiText {
     data class DynamicString(val value: String) : UiText()
 
     fun asString(context: Context): String = when (this) {
-        is StringResource -> if (args.isEmpty()) context.getString(resId) else context.getString(resId, *args)
+        is StringResource -> {
+            val resolvedArgs = args.map { if (it is UiText) it.asString(context) else it }.toTypedArray()
+            if (resolvedArgs.isEmpty()) context.getString(resId) else context.getString(resId, *resolvedArgs)
+        }
         is DynamicString -> value
     }
 }

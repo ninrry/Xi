@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import luzzr.xi.core.ui.theme.MotionTokens
 import luzzr.xi.feature.essay.EssayScreen
 import luzzr.xi.feature.settings.SettingsScreen
 import luzzr.xi.feature.translate.TranslateScreen
@@ -39,48 +40,45 @@ private fun getSlideDirection(
 @Composable
 fun AppNavigation(
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    startDestination: String = Screen.Translate.route
 ) {
+    val slideDur = MotionTokens.durMedium
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Translate.route,
+        startDestination = startDestination,
         modifier = modifier,
-        enterTransition = { fadeIn(animationSpec = tween(300)) },
-        exitTransition = { fadeOut(animationSpec = tween(300)) }
+        enterTransition = { fadeIn(animationSpec = tween(MotionTokens.durMedium)) },
+        exitTransition = { fadeOut(animationSpec = tween(MotionTokens.durMedium)) }
     ) {
         composable(
             route = Screen.Translate.route,
             enterTransition = {
-                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-                slideIntoContainer(dir, animationSpec = tween(300))
+                slideIntoContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
             },
             exitTransition = {
-                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-                slideOutOfContainer(dir, animationSpec = tween(300))
+                slideOutOfContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
             }
         ) { TranslateScreen() }
 
         composable(
             route = Screen.Essay.route,
             enterTransition = {
-                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-                slideIntoContainer(dir, animationSpec = tween(300))
+                slideIntoContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
             },
             exitTransition = {
-                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-                slideOutOfContainer(dir, animationSpec = tween(300))
+                slideOutOfContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
             }
         ) { EssayScreen() }
 
         composable(
             route = Screen.Settings.route,
             enterTransition = {
-                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-                slideIntoContainer(dir, animationSpec = tween(300))
+                slideIntoContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
             },
             exitTransition = {
-                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-                slideOutOfContainer(dir, animationSpec = tween(300))
+                slideOutOfContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
             }
         ) { SettingsScreen() }
     }

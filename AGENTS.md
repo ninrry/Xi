@@ -36,4 +36,4 @@ source ~/.config/android-dev/env.sh
 - Visual: emulator screenshots per screen/state
 
 ## Version History
-- v1.0.0: First official release — AI translation (20 languages, 5 thinking levels), essay correction (4 inputs, 4-dimension scoring), edge pill overlay
+- v1.0.0: First official release — AI translation (20 languages, 3 thinking levels), essay correction (4 inputs, 4-dimension scoring), edge pill overlay

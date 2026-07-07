@@ -13,5 +13,7 @@ data class OverlayUiState(
     val errorMsg: UiText? = null,
     val sourceLang: SupportedLanguage = SupportedLanguage.ENGLISH,
     val targetLang: SupportedLanguage = SupportedLanguage.CHINESE,
-    val engine: TranslationEngine = TranslationEngine.MLKIT
+    val thinkingLevel: luzzr.xi.domain.model.ThinkingLevel = luzzr.xi.domain.model.ThinkingLevel.LOW,
+    val engine: TranslationEngine = TranslationEngine.MLKIT,
+    val usage: luzzr.xi.domain.model.Usage? = null
 )

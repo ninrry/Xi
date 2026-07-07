@@ -8,15 +8,18 @@ import luzzr.xi.core.datastore.AppSettings
 import luzzr.xi.core.datastore.SettingsDataStore
 import luzzr.xi.domain.model.SupportedLanguage
 import luzzr.xi.domain.model.UiText
-import luzzr.xi.data.repository.ApiRepositoryImpl
 import luzzr.xi.data.repository.ModelDownloadProgress
 import luzzr.xi.data.repository.ModelDownloadState
 import luzzr.xi.data.repository.MlKitModelManager
+import luzzr.xi.domain.repository.SettingsGateway
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,7 +30,10 @@ data class SettingsUiState(
     val mlKitDownloadState: ModelDownloadState = ModelDownloadState.IDLE,
     val mlKitDownloadMessage: UiText? = null,
     val mlKitDownloadProgress: Float = 0f,
-    val mlKitDownloading: Boolean = false
+    val mlKitDownloading: Boolean = false,
+    val showProviderSwitchDialog: String? = null,
+    val mlKitSourceLang: SupportedLanguage = SupportedLanguage.ENGLISH,
+    val mlKitTargetLang: SupportedLanguage = SupportedLanguage.CHINESE
 )
 
 sealed class TestStatus {
@@ -38,6 +44,9 @@ sealed class TestStatus {
 }
 
 sealed interface SettingsUiEvent {
+    data class ProviderChanged(val providerId: String) : SettingsUiEvent
+    data class ProviderSwitchConfirmed(val providerId: String) : SettingsUiEvent
+    data object ProviderSwitchCancelled : SettingsUiEvent
     data class ApiBaseUrlChanged(val url: String) : SettingsUiEvent
     data class ApiKeyChanged(val key: String) : SettingsUiEvent
     data class ModelChanged(val model: String) : SettingsUiEvent
@@ -45,61 +54,89 @@ sealed interface SettingsUiEvent {
     data object DownloadMlKitModelClicked : SettingsUiEvent
     data object CancelMlKitDownloadClicked : SettingsUiEvent
     data object RetryMlKitDownloadClicked : SettingsUiEvent
+    data class MlKitSourceLangChanged(val lang: SupportedLanguage) : SettingsUiEvent
+    data class MlKitTargetLangChanged(val lang: SupportedLanguage) : SettingsUiEvent
 }
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
     private val mlKitModelManager: MlKitModelManager,
-    private val apiRepository: ApiRepositoryImpl,
+    private val apiRepository: SettingsGateway,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    private val defaultSourceLang = SupportedLanguage.ENGLISH.displayName
-    private val defaultTargetLang = SupportedLanguage.CHINESE.displayName
-    private val defaultSourceCode = "en"
-    private val defaultTargetCode = "zh"
+    private var mlKitSourceLang = SupportedLanguage.ENGLISH.displayName
+    private var mlKitTargetLang = SupportedLanguage.CHINESE.displayName
+    private var mlKitSourceCode = "en"
+    private var mlKitTargetCode = "zh"
+
+    private val progressListener: (String, ModelDownloadProgress) -> Unit = { _, progress ->
+        viewModelScope.launch {
+            val state = when (progress.state) {
+                ModelDownloadState.DOWNLOADING -> ModelDownloadState.DOWNLOADING
+                ModelDownloadState.COMPLETED -> ModelDownloadState.COMPLETED
+                ModelDownloadState.FAILED -> ModelDownloadState.FAILED
+                ModelDownloadState.IDLE -> ModelDownloadState.IDLE
+            }
+            _uiState.update { it.copy(
+                mlKitDownloadState = state,
+                mlKitDownloadProgress = progress.progress,
+                mlKitDownloading = state == ModelDownloadState.DOWNLOADING,
+                mlKitDownloadMessage = run {
+                    if (progress.message.isNotBlank()) return@run UiText.DynamicString(progress.message)
+                    when (state) {
+                        ModelDownloadState.COMPLETED -> UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready)
+                        ModelDownloadState.DOWNLOADING -> UiText.StringResource(luzzr.xi.R.string.mlkit_downloading)
+                        ModelDownloadState.FAILED -> UiText.StringResource(luzzr.xi.R.string.mlkit_download_failed)
+                        ModelDownloadState.IDLE -> null
+                    }
+                }
+            ) }
+        }
+    }
 
     init {
         viewModelScope.launch {
             settingsDataStore.settings.collect { settings ->
-                _uiState.value = _uiState.value.copy(settings = settings)
+                _uiState.update { it.copy(settings = settings) }
             }
         }
 
         // Listen for download progress updates
-        mlKitModelManager.addProgressListener { _, progress ->
-            viewModelScope.launch {
-                val state = when (progress.state) {
-                    ModelDownloadState.DOWNLOADING -> ModelDownloadState.DOWNLOADING
-                    ModelDownloadState.COMPLETED -> ModelDownloadState.COMPLETED
-                    ModelDownloadState.FAILED -> ModelDownloadState.FAILED
-                    ModelDownloadState.IDLE -> ModelDownloadState.IDLE
-                }
-                _uiState.value = _uiState.value.copy(
-                    mlKitDownloadState = state,
-                    mlKitDownloadProgress = progress.progress,
-                    mlKitDownloading = state == ModelDownloadState.DOWNLOADING,
-                    mlKitDownloadMessage = run {
-                        if (progress.message.isNotBlank()) return@run UiText.DynamicString(progress.message)
-                        when (state) {
-                            ModelDownloadState.COMPLETED -> UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready)
-                            ModelDownloadState.DOWNLOADING -> UiText.StringResource(luzzr.xi.R.string.mlkit_downloading)
-                            ModelDownloadState.FAILED -> UiText.StringResource(luzzr.xi.R.string.mlkit_download_failed)
-                            ModelDownloadState.IDLE -> null
-                        }
-                    }
-                )
-            }
-        }
+        mlKitModelManager.addProgressListener(progressListener)
 
         checkMlKitStatus()
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        mlKitModelManager.removeProgressListener(progressListener)
+    }
+
     fun onEvent(event: SettingsUiEvent) {
         when (event) {
+            is SettingsUiEvent.ProviderChanged -> {
+                if (event.providerId != _uiState.value.settings.providerId) {
+                    _uiState.update { it.copy(showProviderSwitchDialog = event.providerId) }
+                }
+            }
+            is SettingsUiEvent.ProviderSwitchConfirmed -> {
+                val newProviderId = event.providerId
+                val provider = luzzr.xi.core.provider.ProviderRegistry.getProvider(newProviderId)
+                viewModelScope.launch {
+                    settingsDataStore.updateProviderId(newProviderId)
+                    settingsDataStore.updateApiBaseUrl(provider.defaultBaseUrl)
+                    settingsDataStore.updateModel(provider.defaultModel)
+                    settingsDataStore.updateApiKey("")
+                }
+                _uiState.update { it.copy(showProviderSwitchDialog = null, availableModels = emptyList(), testStatus = TestStatus.Idle) }
+            }
+            is SettingsUiEvent.ProviderSwitchCancelled -> {
+                _uiState.update { it.copy(showProviderSwitchDialog = null) }
+            }
             is SettingsUiEvent.ApiBaseUrlChanged -> updateApiBaseUrl(event.url)
             is SettingsUiEvent.ApiKeyChanged -> updateApiKey(event.key)
             is SettingsUiEvent.ModelChanged -> updateModel(event.model)
@@ -107,15 +144,36 @@ class SettingsViewModel @Inject constructor(
             SettingsUiEvent.DownloadMlKitModelClicked -> downloadMlKitModel()
             SettingsUiEvent.CancelMlKitDownloadClicked -> cancelMlKitDownload()
             SettingsUiEvent.RetryMlKitDownloadClicked -> retryMlKitDownload()
+            is SettingsUiEvent.MlKitSourceLangChanged -> {
+                mlKitSourceLang = event.lang.displayName
+                mlKitSourceCode = event.lang.code
+                _uiState.update { it.copy(mlKitSourceLang = event.lang) }
+            }
+            is SettingsUiEvent.MlKitTargetLangChanged -> {
+                mlKitTargetLang = event.lang.displayName
+                mlKitTargetCode = event.lang.code
+                _uiState.update { it.copy(mlKitTargetLang = event.lang) }
+            }
         }
     }
 
+    private var apiUrlJob: Job? = null
+    private var apiKeyJob: Job? = null
+
     private fun updateApiBaseUrl(url: String) {
-        viewModelScope.launch { settingsDataStore.updateApiBaseUrl(url) }
+        apiUrlJob?.cancel()
+        apiUrlJob = viewModelScope.launch {
+            delay(300)
+            settingsDataStore.updateApiBaseUrl(url)
+        }
     }
 
     private fun updateApiKey(key: String) {
-        viewModelScope.launch { settingsDataStore.updateApiKey(key) }
+        apiKeyJob?.cancel()
+        apiKeyJob = viewModelScope.launch {
+            delay(300)
+            settingsDataStore.updateApiKey(key)
+        }
     }
 
     private fun updateModel(model: String) {
@@ -124,55 +182,54 @@ class SettingsViewModel @Inject constructor(
 
     private fun testConnection() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(testStatus = TestStatus.Testing)
+            _uiState.update { it.copy(testStatus = TestStatus.Testing) }
             try {
-                val api = apiRepository.getCurrentApi()
-                val response = api.listModels()
+                val response = apiRepository.testConnection()
                 val models = response.data?.mapNotNull { it.id } ?: emptyList()
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     testStatus = TestStatus.Success(modelCount = models.size),
                     availableModels = models
-                )
+                ) }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     testStatus = TestStatus.Failure(e.message ?: "Unknown error")
-                )
+                ) }
             }
         }
     }
 
     private fun downloadMlKitModel() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
+            _uiState.update { it.copy(
                 mlKitDownloading = true,
                 mlKitDownloadState = ModelDownloadState.DOWNLOADING,
                 mlKitDownloadProgress = 0f,
                 mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_prepare_download)
-            )
+            ) }
 
             val result = mlKitModelManager.downloadModel(
-                sourceLang = defaultSourceLang,
-                targetLang = defaultTargetLang,
-                sourceCode = defaultSourceCode,
-                targetCode = defaultTargetCode
+                sourceLang = mlKitSourceLang,
+                targetLang = mlKitTargetLang,
+                sourceCode = mlKitSourceCode,
+                targetCode = mlKitTargetCode
             )
 
             result.fold(
                 onSuccess = {
-                    _uiState.value = _uiState.value.copy(
+                    _uiState.update { it.copy(
                         mlKitDownloading = false,
                         mlKitDownloadState = ModelDownloadState.COMPLETED,
                         mlKitDownloadProgress = 1f,
-                        mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_download_success)
-                    )
+                        mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready)
+                    ) }
                 },
                 onFailure = { e ->
-                    _uiState.value = _uiState.value.copy(
+                    _uiState.update { it.copy(
                         mlKitDownloading = false,
                         mlKitDownloadState = ModelDownloadState.FAILED,
                         mlKitDownloadMessage = e.message?.let { UiText.DynamicString(it) }
                             ?: UiText.StringResource(luzzr.xi.R.string.mlkit_download_retry)
-                    )
+                    ) }
                 }
             )
         }
@@ -180,33 +237,39 @@ class SettingsViewModel @Inject constructor(
 
     private fun cancelMlKitDownload() {
         mlKitModelManager.cancelDownload()
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             mlKitDownloading = false,
             mlKitDownloadState = ModelDownloadState.IDLE,
             mlKitDownloadProgress = 0f,
             mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_download_cancelled)
-        )
+        ) }
     }
 
     private fun retryMlKitDownload() {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             mlKitDownloading = false,
             mlKitDownloadState = ModelDownloadState.IDLE,
             mlKitDownloadProgress = 0f,
             mlKitDownloadMessage = null
-        )
+        ) }
         downloadMlKitModel()
     }
 
     private fun checkMlKitStatus() {
         viewModelScope.launch {
-            val enZh = mlKitModelManager.isModelDownloaded(defaultSourceLang, defaultTargetLang)
-            _uiState.value = _uiState.value.copy(
+            val enZh = mlKitModelManager.isModelDownloaded(
+                mlKitSourceLang, 
+                mlKitTargetLang,
+                mlKitSourceCode,
+                mlKitTargetCode
+            )
+            _uiState.update { it.copy(
                 mlKitDownloadState = if (enZh) ModelDownloadState.COMPLETED else ModelDownloadState.IDLE,
                 mlKitDownloading = false,
                 mlKitDownloadProgress = if (enZh) 1f else 0f,
                 mlKitDownloadMessage = if (enZh) UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready) else null
-            )
+            ) }
         }
     }
+
 }

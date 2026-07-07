@@ -1,43 +1,23 @@
 package luzzr.xi.core.ui.theme
 
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 
 // Warm ivory palette
 val Ivory = Color(0xFFF4F1EA)
-val IvoryDark = Color(0xFFEDE9E0)
+val IvoryDark = Color(0xFFEBE7DF)
 val BrownGray = Color(0xFF3D3530)
-val BrownGrayLight = Color(0xFF6B5E54)
+val BrownGrayLight = Color(0xFF5D5248)
 val WarmAccent = Color(0xFF8B7355)
 val WarmAccentLight = Color(0xFFB8A68E)
-val DividerColor = Color(0xFFE8E2DA)
+val DividerColor = Color(0xFFDDD7CE)
 
-// Correction colors
-val CorrectionDelete = Color(0xFFC4856E)
-val CorrectionAdd = Color(0xFF7A9E7E)
-val CorrectionAddBg = Color(0xFFEAF5EC)
-val CorrectionNote = Color(0xFFB8860B)
-val CorrectionNoteBg = Color(0xFFF5F0E8)
+val CorrectionDelete = Color(0xFFC4918A)
+val CorrectionAdd = Color(0xFF8FAA8C)
+val CorrectionAddBg = Color(0xFFEDEBE6)
+val CorrectionNote = Color(0xFFB8960B)
+val CorrectionNoteBg = Color(0xFFF3EDE4)
 
-// Overlay
 val OverlayBg = Color(0xF5F4F1EA)
 val OverlayBubble = Color(0x998B7355)
 
-// Shape tokens — consistent radii scale
-object AppShape {
-    /** Large cards, panels */
-    val card = RoundedCornerShape(28.dp)
-    /** Dialogs */
-    val dialog = RoundedCornerShape(32.dp)
-    /** Buttons (primary, secondary) */
-    val button = RoundedCornerShape(28.dp)
-    /** Input fields (OutlinedTextField) */
-    val input = RoundedCornerShape(24.dp)
-    /** Small cards, tabs, chips */
-    val small = RoundedCornerShape(16.dp)
-    /** Inline items, tips, corrections */
-    val mini = RoundedCornerShape(12.dp)
-    /** Floating bubble / pill — fully round */
-    val bubble = RoundedCornerShape(50)
-}
+// Shapes are in Shape.kt

@@ -2,16 +2,12 @@ package luzzr.xi.feature.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,7 +31,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -55,17 +54,18 @@ import luzzr.xi.core.ui.theme.AbstractIcons
 import luzzr.xi.core.ui.theme.AppShape
 import luzzr.xi.core.ui.theme.CorrectionAdd
 import luzzr.xi.core.ui.theme.CorrectionDelete
-import luzzr.xi.feature.settings.SettingsUiEvent
-import luzzr.xi.feature.settings.SettingsViewModel
-import luzzr.xi.feature.settings.TestStatus
+import luzzr.xi.core.ui.theme.MotionTokens
+import luzzr.xi.core.ui.theme.AppSpacing
+import luzzr.xi.core.ui.components.PressScaleBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settings = uiState.settings
+    val context = LocalContext.current
     var modelExpanded by remember { mutableStateOf(false) }
     var apiKeyVisible by remember { mutableStateOf(false) }
 
@@ -73,25 +73,77 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .widthIn(max = 600.dp)
+            .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.md)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
     ) {
         // ====== AI Config Section ======
         SectionCard {
             SectionTitle(stringResource(R.string.settings_section_ai))
+
+            // Provider Selector
+            Column(modifier = Modifier.fillMaxWidth()) {
+                luzzr.xi.core.provider.ProviderRegistry.getAllProviders().forEach { provider ->
+                    val isSelected = provider.id == settings.providerId
+                    PressScaleBox(
+                        onClick = { viewModel.onEvent(SettingsUiEvent.ProviderChanged(provider.id)) },
+                        onPressScale = 0.98f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .clip(AppShape.small)
+                            .border(
+                                if (isSelected) 1.5.dp else 0.5.dp,
+                                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                                AppShape.small
+                            )
+                            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.sm)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(provider.displayNameRes),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                                Text(
+                                    stringResource(provider.descriptionRes),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                            if (isSelected) {
+                                AbstractIcons.CheckCircle(
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    if (provider != luzzr.xi.core.provider.ProviderRegistry.getAllProviders().last()) {
+                        Spacer(modifier = Modifier.height(AppSpacing.xs))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(AppSpacing.md))
 
             // API Base URL
             OutlinedTextField(
                 value = settings.apiBaseUrl,
                 onValueChange = { viewModel.onEvent(SettingsUiEvent.ApiBaseUrlChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.settings_api_url), fontSize = 13.sp) },
+                label = { Text(stringResource(R.string.settings_api_url), style = MaterialTheme.typography.bodySmall) },
                 placeholder = {
                     Text(
                         stringResource(R.string.settings_api_url_placeholder),
                         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                        fontSize = 13.sp
+                        style = MaterialTheme.typography.bodySmall
                     )
                 },
                 colors = OutlinedTextFieldDefaults.colors(
@@ -107,27 +159,18 @@ fun SettingsScreen(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // API Key with visibility toggle
-            val eyeInteraction = remember { MutableInteractionSource() }
-            val isEyePressed by eyeInteraction.collectIsPressedAsState()
-            val eyeScale by animateFloatAsState(
-                targetValue = if (isEyePressed) 0.90f else 1f,
-                animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                label = "eye_scale"
-            )
+            Spacer(modifier = Modifier.height(AppSpacing.sm))
 
             OutlinedTextField(
                 value = settings.apiKey,
                 onValueChange = { viewModel.onEvent(SettingsUiEvent.ApiKeyChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.settings_api_key), fontSize = 13.sp) },
+                label = { Text(stringResource(R.string.settings_api_key), style = MaterialTheme.typography.bodySmall) },
                 placeholder = {
                     Text(
                         stringResource(R.string.settings_api_key_placeholder),
                         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                        fontSize = 13.sp
+                        style = MaterialTheme.typography.bodySmall
                     )
                 },
                 visualTransformation = if (!apiKeyVisible) {
@@ -136,18 +179,11 @@ fun SettingsScreen(
                     VisualTransformation.None
                 },
                 trailingIcon = {
-                    Box(
+                    PressScaleBox(
+                        onClick = { apiKeyVisible = !apiKeyVisible },
                         modifier = Modifier
                             .size(36.dp)
-                            .graphicsLayer {
-                                scaleX = eyeScale
-                                scaleY = eyeScale
-                            }
                             .clip(AppShape.mini)
-                            .clickable(interactionSource = eyeInteraction, indication = null) {
-                                apiKeyVisible = !apiKeyVisible
-                            },
-                        contentAlignment = Alignment.Center
                     ) {
                         AbstractIcons.Visibility(
                             modifier = Modifier.size(20.dp),
@@ -169,31 +205,39 @@ fun SettingsScreen(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Provider-specific helper link
+            val currentProvider = luzzr.xi.core.provider.ProviderRegistry.getProvider(settings.providerId)
+            if (currentProvider.websiteUrl.isNotBlank() && currentProvider.helpLinkTextRes != 0) {
+                PressScaleBox(
+                    onClick = {
+                        try {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(currentProvider.websiteUrl))
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                    },
+                    modifier = Modifier.padding(top = AppSpacing.xs)
+                ) {
+                    Text(
+                        stringResource(currentProvider.helpLinkTextRes),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
 
-            // Model selector
-            val modelSelectorInteraction = remember { MutableInteractionSource() }
-            val isModelPressed by modelSelectorInteraction.collectIsPressedAsState()
-            val modelScale by animateFloatAsState(
-                targetValue = if (isModelPressed) 0.92f else 1f,
-                animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                label = "model_scale"
-            )
+            Spacer(modifier = Modifier.height(AppSpacing.sm))
 
             Column(modifier = Modifier.fillMaxWidth()) {
-                Box(
+                PressScaleBox(
+                    onClick = {
+                        if (uiState.availableModels.isNotEmpty()) {
+                            modelExpanded = !modelExpanded
+                        }
+                    },
+                    onPressScale = 0.98f,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .scale(modelScale)
                         .clip(AppShape.input)
-                        .clickable(
-                            interactionSource = modelSelectorInteraction,
-                            indication = null
-                        ) {
-                            if (uiState.availableModels.isNotEmpty()) {
-                                modelExpanded = !modelExpanded
-                            }
-                        }
                 ) {
                     OutlinedTextField(
                         value = settings.model,
@@ -201,12 +245,12 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = false,
                         readOnly = true,
-                        label = { Text(stringResource(R.string.settings_model), fontSize = 13.sp) },
+                        label = { Text(stringResource(R.string.settings_model), style = MaterialTheme.typography.bodySmall) },
                         placeholder = {
                             Text(
                                 stringResource(R.string.settings_model_placeholder),
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                                fontSize = 13.sp
+                                style = MaterialTheme.typography.bodySmall
                             )
                         },
                         trailingIcon = {
@@ -229,6 +273,15 @@ fun SettingsScreen(
                     )
                 }
 
+                if (uiState.availableModels.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.settings_connect_first),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = AppSpacing.lg, top = AppSpacing.xs)
+                    )
+                }
+
                 AnimatedVisibility(
                     visible = modelExpanded && uiState.availableModels.isNotEmpty(),
                     enter = expandVertically() + fadeIn(),
@@ -237,6 +290,8 @@ fun SettingsScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState())
                             .padding(top = 6.dp)
                             .clip(AppShape.small)
                             .background(MaterialTheme.colorScheme.background)
@@ -245,36 +300,21 @@ fun SettingsScreen(
                     ) {
                         uiState.availableModels.forEach { model ->
                             val isSelected = model == settings.model
-                            val itemInteraction = remember { MutableInteractionSource() }
-                            val isItemPressed by itemInteraction.collectIsPressedAsState()
-                            val itemBgColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else if (isItemPressed) MaterialTheme.colorScheme.surfaceVariant else androidx.compose.ui.graphics.Color.Transparent
-                            val itemScale by animateFloatAsState(
-                                targetValue = if (isItemPressed) 0.95f else 1f,
-                                animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                                label = "model_item_scale"
-                            )
-
-                            Box(
+                            PressScaleBox(
+                                onClick = {
+                                    viewModel.onEvent(SettingsUiEvent.ModelChanged(model))
+                                    modelExpanded = false
+                                },
+                                onPressScale = 0.97f,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .graphicsLayer {
-                                        scaleX = itemScale
-                                        scaleY = itemScale
-                                    }
                                     .clip(AppShape.mini)
-                                    .background(itemBgColor)
-                                    .clickable(
-                                        interactionSource = itemInteraction,
-                                        indication = null
-                                    ) {
-                                        viewModel.onEvent(SettingsUiEvent.ModelChanged(model))
-                                        modelExpanded = false
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else androidx.compose.ui.graphics.Color.Transparent)
+                                    .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.md)
                             ) {
                                 Text(
                                     text = model,
-                                    fontSize = 13.sp,
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                                 )
@@ -284,34 +324,18 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppSpacing.md))
 
             // Test Connection button
-            val testInteraction = remember { MutableInteractionSource() }
-            val isTestPressed by testInteraction.collectIsPressedAsState()
-            val testScale by animateFloatAsState(
-                targetValue = if (isTestPressed) 0.95f else 1f,
-                animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-                label = "test_scale"
-            )
-            Box(
+            PressScaleBox(
+                enabled = uiState.testStatus !is TestStatus.Testing && settings.apiKey.isNotBlank() && settings.apiBaseUrl.isNotBlank(),
+                onClick = { viewModel.onEvent(SettingsUiEvent.TestConnectionClicked) },
+                onPressScale = 0.97f,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(44.dp)
-                    .graphicsLayer {
-                        scaleX = testScale
-                        scaleY = testScale
-                    }
                     .clip(AppShape.button)
                     .background(if (uiState.testStatus is TestStatus.Testing) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary)
-                    .clickable(
-                        enabled = uiState.testStatus !is TestStatus.Testing,
-                        interactionSource = testInteraction,
-                        indication = null
-                    ) {
-                        viewModel.onEvent(SettingsUiEvent.TestConnectionClicked)
-                    },
-                contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (uiState.testStatus is TestStatus.Testing) {
@@ -320,21 +344,19 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.background,
                             strokeWidth = 2.dp
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppSpacing.sm))
                         Text(
                             stringResource(R.string.settings_connection_testing),
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.background,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.background
                         )
                     } else {
                         AbstractIcons.Refresh(modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.background)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppSpacing.sm))
                         Text(
                             stringResource(R.string.settings_test_connection),
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.background,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.background
                         )
                     }
                 }
@@ -344,30 +366,30 @@ fun SettingsScreen(
             AnimatedVisibility(
                 visible = uiState.testStatus !is TestStatus.Idle,
                 enter = expandVertically(
-                    animationSpec = tween(300)
+                    animationSpec = MotionTokens.tweenMedium()
                 ) + fadeIn(
-                    animationSpec = tween(300)
+                    animationSpec = MotionTokens.tweenMedium()
                 ),
                 exit = shrinkVertically(
-                    animationSpec = tween(250)
+                    animationSpec = MotionTokens.tweenMedium()
                 ) + fadeOut(
-                    animationSpec = tween(250)
+                    animationSpec = MotionTokens.tweenMedium()
                 )
             ) {
                 when (val status = uiState.testStatus) {
                     is TestStatus.Success -> {
                         Row(
-                            modifier = Modifier.padding(top = 8.dp),
+                            modifier = Modifier.padding(top = AppSpacing.sm),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             AbstractIcons.CheckCircle(tint = CorrectionAdd, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(AppSpacing.sm))
                             Text(
                                 stringResource(
                                     R.string.settings_connection_success,
                                     status.modelCount
                                 ),
-                                fontSize = 13.sp,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -375,21 +397,20 @@ fun SettingsScreen(
 
                     is TestStatus.Failure -> {
                         Row(
-                            modifier = Modifier.padding(top = 8.dp),
+                            modifier = Modifier.padding(top = AppSpacing.sm),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             AbstractIcons.ErrorExclamation(tint = CorrectionDelete, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(AppSpacing.sm))
                             Column {
                                 Text(
                                     stringResource(R.string.settings_connection_fail),
-                                    fontSize = 13.sp,
-                                    color = CorrectionDelete,
-                                    fontWeight = FontWeight.Medium
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = CorrectionDelete
                                 )
                                 Text(
                                     status.message,
-                                    fontSize = 12.sp,
+                                    style = MaterialTheme.typography.labelMedium,
                                     color = CorrectionDelete.copy(alpha = 0.7f)
                                 )
                             }
@@ -423,6 +444,55 @@ fun SettingsScreen(
 
         // ====== About Section ======
         SettingsAboutSection()
+
+        // Provider switch confirmation dialog
+        uiState.showProviderSwitchDialog?.let { pendingProviderId ->
+            androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.onEvent(SettingsUiEvent.ProviderSwitchCancelled) }) {
+                Box(
+                    modifier = Modifier
+                        .clip(AppShape.dialog)
+                        .background(MaterialTheme.colorScheme.background)
+                        .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.dialog)
+                        .padding(20.dp)
+                        .fillMaxWidth()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            stringResource(R.string.provider_switch_confirm),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            PressScaleBox(
+                                onClick = { viewModel.onEvent(SettingsUiEvent.ProviderSwitchCancelled) },
+                                modifier = Modifier.clip(AppShape.small).padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(stringResource(R.string.permission_cancel), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+                            }
+                            Spacer(modifier = Modifier.width(AppSpacing.sm))
+                            PressScaleBox(
+                                onClick = { viewModel.onEvent(SettingsUiEvent.ProviderSwitchConfirmed(pendingProviderId)) },
+                                onPressScale = 0.97f,
+                                modifier = Modifier
+                                    .clip(AppShape.button)
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .padding(horizontal = 14.dp, vertical = AppSpacing.sm)
+                            ) {
+                                Text(
+                                    stringResource(R.string.provider_switch_confirm_yes),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.background
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Bottom spacing for scroll comfort
         Spacer(modifier = Modifier.height(120.dp))

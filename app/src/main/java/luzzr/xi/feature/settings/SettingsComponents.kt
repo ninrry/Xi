@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import luzzr.xi.core.ui.theme.AppShape
+import luzzr.xi.core.ui.theme.AppSpacing
 
 @Composable
 fun SectionCard(content: @Composable () -> Unit) {
@@ -25,7 +26,7 @@ fun SectionCard(content: @Composable () -> Unit) {
             .clip(AppShape.card)
             
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(16.dp)
+            .padding(AppSpacing.lg)
     ) {
         content()
     }
@@ -35,9 +36,8 @@ fun SectionCard(content: @Composable () -> Unit) {
 fun SectionTitle(title: String) {
     Text(
         text = title,
-        fontSize = 15.sp,
-        fontWeight = FontWeight.SemiBold,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onBackground
     )
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(AppSpacing.md))
 }

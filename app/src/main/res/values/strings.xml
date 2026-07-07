@@ -17,9 +17,9 @@
     <string name="translate_empty_desc">输入英文或中文文本，AI 即刻为你翻译</string>
     <string name="translate_error_empty">请输入文本</string>
     <string name="translate_copy">复制</string>
+    <string name="translate_alternatives">其他选择</string>
     <string name="translate_clear">清空</string>
     <string name="translate_swap">交换语言</string>
-    <string name="thinking_level">思考程度</string>
     <string name="translate_select_source">选择源语言</string>
     <string name="translate_select_target">选择目标语言</string>
 
@@ -55,10 +55,10 @@
     <string name="guidance_model">请先在设置中选择模型</string>
     <string name="guidance_network">网络不可用，请检查网络连接</string>
 
-    <string name="essay_grammar_correction">--- 语法纠错 ---</string>
-    <string name="essay_vocabulary_optimization">--- 词汇优化 ---</string>
-    <string name="essay_structure_analysis">--- 结构分析 ---</string>
-    <string name="essay_style_suggestions">--- 风格建议 ---</string>
+    <string name="essay_grammar_correction">语法纠错</string>
+    <string name="essay_vocabulary_optimization">词汇优化</string>
+    <string name="essay_structure_analysis">结构分析</string>
+    <string name="essay_style_suggestions">风格建议</string>
     <string name="essay_no_obvious_problems">未发现明显问题。</string>
     <string name="essay_not_scored">未评分</string>
     <string name="essay_no_suggestions">暂无建议</string>
@@ -67,7 +67,7 @@
     <string name="settings_title">设置</string>
     <string name="settings_section_ai">AI 服务配置</string>
     <string name="settings_api_url">API 地址</string>
-    <string name="settings_api_url_placeholder">https://opencode.ai/zen/go/v1</string>
+    <string name="settings_api_url_placeholder">https://api.xiaomimimo.com/v1</string>
     <string name="settings_api_key">API Key</string>
     <string name="settings_api_key_placeholder">输入你的 API Key</string>
     <string name="settings_model">模型</string>
@@ -77,9 +77,9 @@
     <string name="settings_connection_success">连接成功，发现 %d 个模型</string>
     <string name="settings_connection_fail">连接失败</string>
     <string name="settings_section_about">关于</string>
-    <string name="settings_version">Xi v1.0.0</string>
+    <string name="settings_version">版本</string>
     <string name="settings_desc">AI 驱动的英语学习助手</string>
-    <string name="settings_default_model_info">默认使用 OpenCode Go 订阅 (mimo-v2.5 模型)</string>
+    <string name="settings_default_model_info">默认使用小米 MiMo (mimo-v2.5 模型)</string>
     <string name="settings_show_key">显示 API Key</string>
     <string name="settings_hide_key">隐藏 API Key</string>
 
@@ -105,24 +105,23 @@
     <string name="mlkit_download_cancelled">下载已取消</string>
     <string name="mlkit_prepare_download">准备下载…</string>
     <string name="mlkit_download_retry">下载失败，请重试</string>
-    <string name="mlkit_download_success">离线翻译模型已就绪</string>
 
     <!-- Common -->
     <string name="loading">处理中…</string>
     <string name="error_network">网络请求失败</string>
     <string name="error_no_network">无网络连接，请检查网络设置</string>
     <string name="error_api">API 错误: %s</string>
+    <string name="error_api_with_provider">[%1$s] API 错误: %2$s</string>
     <string name="error_api_client">无法创建 API 客户端</string>
     <string name="error_empty_key">请先在设置中填写 API Key</string>
     <string name="error_result_empty">结果为空</string>
-    <string name="error_translate_result_empty">翻译结果为空</string>
+    <string name="error_translate_result_empty">翻译结果为空，请重试</string>
     <string name="error_essay_result_empty">批改结果为空</string>
     <string name="error_translate_failed">翻译失败</string>
     <string name="error_translate_timeout">翻译超时，请检查网络或重试</string>
     <string name="error_essay_failed">批改失败</string>
     <string name="error_network_detail">网络请求失败: %s</string>
     <string name="error_parse_failed">AI 返回格式异常，请重试</string>
-    <string name="error_translation_empty">翻译结果为空，请重试</string>
     <string name="error_invalid_json">AI 返回无效格式，请重试</string>
     <string name="error_ai_not_english">输入内容不是英文，请提供英文作文</string>
     <string name="error_ai_unreadable_image">图片无法识别，请提供更清晰的图片</string>
@@ -156,10 +155,37 @@
     <string name="essay_camera_permission_denied">无法申请相机权限</string>
 
     <!-- ML Kit Section (extracted) -->
-    <string name="mlkit_downloading_label">下载中…</string>
-    <string name="mlkit_download_failed_label">下载失败</string>
-    <string name="mlkit_retry_download">重试下载</string>
     <string name="mlkit_download_prompt">点击下方按钮下载离线翻译模型，首次下载约需几MB流量。</string>
     <string name="error_mlkit_timeout">模型下载或翻译超时，请检查网络连接</string>
     <string name="mlkit_download_model">下载离线模型</string>
+
+    <!-- Translate -->
+    <string name="translate_same_language">源语言和目标语言不能相同</string>
+    <string name="settings_connect_first">请先测试连接</string>
+    <string name="settings_search_placeholder">搜索语言…</string>
+    <string name="overlay_service_stopping">正在停止悬浮翻译窗</string>
+    <string name="error_input_too_long_translate">输入文本过长（最多 5000 字符）</string>
+    <string name="error_input_too_long_essay">输入文本过长（最多 10000 字符）</string>
+    <string name="error_mlkit_auto_not_supported">极速翻译不支持自动检测，请选择源语言</string>
+    <string name="tokens_format">Token: %1$d (提示: %2$d, 补全: %3$d)</string>
+    <string name="token_usage_format">Token: %1$d (输入: %2$d, 输出: %3$d)</string>
+    <string name="score_grammar">语法</string>
+    <string name="score_vocab">词汇</string>
+    <string name="score_structure">结构</string>
+    <string name="score_style">风格</string>
+    <string name="line_info">第 %d 行: </string>
+
+    <!-- Provider -->
+    <string name="provider_opencode">OpenCode Go</string>
+    <string name="provider_xiaomi_mimo">小米 MiMo</string>
+    <string name="provider_custom">自定义 API</string>
+    <string name="provider_section_title">AI 供应商</string>
+    <string name="provider_opencode_desc">OpenCode 订阅服务，默认使用 mimo-v2.5 模型</string>
+    <string name="provider_xiaomi_mimo_desc">小米 MiMo API 开放平台，按量付费或 Token Plan</string>
+    <string name="provider_custom_desc">兼容 OpenAI 格式的任意 API 服务</string>
+    <string name="provider_switch_confirm">切换供应商将重置 API 地址和模型配置，是否继续？</string>
+    <string name="provider_switch_confirm_yes">切换</string>
+    <string name="provider_xiaomi_mimo_get_key">获取 MiMo API Key</string>
+    <string name="provider_opencode_get_key">前往 OpenCode</string>
+    <string name="error_unknown">未知错误，请重试</string>
 </resources>

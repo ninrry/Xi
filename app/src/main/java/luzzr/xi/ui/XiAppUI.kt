@@ -5,10 +5,12 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -18,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import luzzr.xi.core.ui.theme.AppShape
+import luzzr.xi.core.ui.theme.AppSpacing
+import luzzr.xi.core.ui.components.PressScaleBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +35,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -79,12 +82,13 @@ fun XiAppUI(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(bottom = AppSpacing.xl)
                     .width(260.dp)
                     .clip(AppShape.button)
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.9f))
                     .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.button)
-                    .padding(vertical = 6.dp, horizontal = 12.dp)
+                    .padding(vertical = AppSpacing.sm, horizontal = AppSpacing.md)
             ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
@@ -122,37 +126,25 @@ private fun RowScope.FloatingNavItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.90f else 1f,
-        animationSpec = luzzr.xi.core.ui.theme.MotionTokens.springDefault(),
-        label = "nav_item_scale"
-    )
-
     val tintColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
 
     // Selected indicator background
     val indicatorModifier = if (selected) {
         Modifier
-            .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(AppShape.small)
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
     } else {
-        Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
+        Modifier
     }
 
-    Box(
+    PressScaleBox(
+        onClick = onClick,
+        onPressScale = 0.97f,
         modifier = Modifier
             .weight(1f)
             .then(indicatorModifier)
             .clip(AppShape.small)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
-            .padding(vertical = 6.dp, horizontal = 4.dp),
+            .padding(vertical = AppSpacing.sm, horizontal = AppSpacing.xs),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -168,7 +160,7 @@ private fun RowScope.FloatingNavItem(
             }
             Text(
                 text = stringResource(screen.titleResId),
-                fontSize = 11.sp,
+                style = MaterialTheme.typography.labelSmall,
                 color = tintColor,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
             )
