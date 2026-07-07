@@ -18,21 +18,6 @@ class ApiProvider @Inject constructor() {
 
     private val sharedClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .followRedirects(true)
-            .followSslRedirects(true)
-            .build()
-    }
-
-    /**
-     * Shared connection pool and dispatcher to avoid creating new ones on every config change.
-     * When the user changes API settings, we rebuild the Retrofit instance but reuse the
-     * underlying OkHttp connection pool for better connection reuse.
-     */
-    private val sharedClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)

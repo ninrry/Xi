@@ -23,8 +23,8 @@ android {
         applicationId = "luzzr.xi"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.1.0"
+        versionCode = 9
+        versionName = "1.1.1"
     }
 
     signingConfigs {
