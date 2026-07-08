@@ -81,6 +81,7 @@ export ANDROID_HOME=/path/to/android-sdk
 
 ## 版本历史
 
+- **v1.2.3** (2026-07-08) — 优化启动开场动画（图标放大淡出过渡到主界面）
 - **v1.2.2** (2026-07-08) — 替换应用启动器图标为全新设计
 - **v1.2.1** (2026-07-08) — UI 极简抽象化重构（AbstractIcons 细线条 Path 设计、底部导航栏简化）
 - **v1.2.0** (2026-07-08) — 领域层 Gateway 接口重构、翻译请求去重、ML Kit 翻译器缓存、OverlayController 作用域修复、AppError 国际化
@@ -94,6 +95,7 @@ export ANDROID_HOME=/path/to/android-sdk
 
 | 版本 | 日期 | arm64 (真机) | x86_64 (模拟器) |
 |------|------|-------------|----------------|
+| v1.2.3 | 2026-07-08 | [Xi_v1.2.3_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.3/Xi_v1.2.3_arm64.apk) | — |
 | v1.2.2 | 2026-07-08 | [Xi_v1.2.2_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.2/Xi_v1.2.2_arm64.apk) | — |
 | v1.2.1 | 2026-07-08 | [Xi_v1.2.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.1/Xi_v1.2.1_arm64.apk) | [Xi_v1.2.1_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.1/Xi_v1.2.1_x86_64.apk) |
 | v1.2.0 | 2026-07-08 | [Xi_v1.2.0_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.0/Xi_v1.2.0_arm64.apk) | [Xi_v1.2.0_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.0/Xi_v1.2.0_x86_64.apk) |
