@@ -84,19 +84,19 @@ export ANDROID_HOME=/path/to/android-sdk
 - **v1.1.2** (2026-07-07) — 修复 Release 构建下点击设置崩溃（ProGuard ML Kit 包名错误 + isModelDownloaded 异常未捕获）
 - **v1.1.1** (2026-07-07) — 修复 ApiProvider 重复 sharedClient 导致设置界面崩溃的编译错误
 - **v1.1.0** (2026-07-07) — AI 供应商模块（小米 MiMo/OpenCode Go/自定义）、85 项审查修复、流式翻译可靠性重构
-- **v1.0.1** (2026-07-06) — ML Kit 模型下载进度指示、强制分离架构打包（arm64/x86_64）、协程作用域泄漏修复、状态原子更新修复、屏幕旋转处理
+- **v1.0.1** (2026-07-06) — ML Kit 模型下载进度指示、arm64-v8a 架构构建、协程作用域泄漏修复、状态原子更新修复、屏幕旋转处理
 - **v1.0.0** (2026-07-05) — 首个正式发布版：AI 翻译（20 语言 + 3 级思考深度）、作文批改（4 种输入 + 四维评分）、边缘小白条悬浮窗
 
 ## 下载
 
-| 版本 | 日期 | arm64 (真机) | x86_64 (模拟器) |
-|------|------|-------------|----------------|
-| v1.1.2 | 2026-07-07 | [Xi_v1.1.2_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.2/Xi_v1.1.2_arm64.apk) | [Xi_v1.1.2_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.2/Xi_v1.1.2_x86_64.apk) |
-| v1.1.1 | 2026-07-07 | [Xi_v1.1.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.1/Xi_v1.1.1_arm64.apk) | [Xi_v1.1.1_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.1/Xi_v1.1.1_x86_64.apk) |
-| v1.1.0 | 2026-07-07 | [Xi_v1.1.0_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.0/Xi_v1.1.0_arm64.apk) | [Xi_v1.1.0_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.0/Xi_v1.1.0_x86_64.apk) |
-| v1.0.1 | 2026-07-06 | [Xi_v1.0.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.0.1/Xi_v1.0.1_arm64.apk) | [Xi_v1.0.1_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.0.1/Xi_v1.0.1_x86_64.apk) |
+| 版本 | 日期 | arm64 (真机) |
+|------|------|-------------|
+| v1.1.2 | 2026-07-07 | [Xi_v1.1.2_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.2/Xi_v1.1.2_arm64.apk) |
+| v1.1.1 | 2026-07-07 | [Xi_v1.1.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.1/Xi_v1.1.1_arm64.apk) |
+| v1.1.0 | 2026-07-07 | [Xi_v1.1.0_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.1.0/Xi_v1.1.0_arm64.apk) |
+| v1.0.1 | 2026-07-06 | [Xi_v1.0.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.0.1/Xi_v1.0.1_arm64.apk) |
 
-> **如何选择？** 真机（小米、三星等）下载 arm64；模拟器下载 x86_64。
+> **说明：** Release 构建仅产出 arm64-v8a 包（真机：小米、三星等）。模拟器请使用 `assembleDebug` 调试构建。
 
 ## 许可证
 

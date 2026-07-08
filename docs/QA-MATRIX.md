@@ -1,4 +1,4 @@
-# QA-MATRIX.md — LingoFlow
+# QA-MATRIX.md — Xi
 
 ## Build Verification
 
@@ -6,7 +6,7 @@
 |-------|--------|----------|
 | `./gradlew assembleDebug` | PASS | BUILD SUCCESSFUL |
 | `./gradlew testDebugUnitTest` | PASS | All tests pass |
-| APK size | 20MB | dist/lingoflow-v1.0.2-debug.apk |
+| APK size | see release artifacts | dist/Xi-*-arm64.apk |
 
 ## Screen Verification
 

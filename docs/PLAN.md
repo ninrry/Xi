@@ -1,4 +1,4 @@
-# LingoFlow — AI English Learning Assistant
+# Xi — AI English Learning Assistant
 
 ## Product Brief
 
@@ -24,7 +24,7 @@ Chinese English learners who need quick translation while reading/using other ap
 | KSP                    | 2.3.9            |
 | DataStore              | 1.2.1            |
 | Retrofit + OkHttp      | latest           |
-| Navigation3            | 1.1.3            |
+| Navigation Compose      | 2.9.1            |
 | minSdk                 | 26 (Android 8.0) |
 | targetSdk / compileSdk | 36               |
 
@@ -51,12 +51,10 @@ MVVM + Clean Architecture
 ├─────────────────────────────────────┤
 │  Data Layer                         │
 │  ├── OpenAI-compatible API (Retrofit)│
-│  ├── DataStore (settings/prefs)     │
-│  └── Room (essay history, optional) │
+│  └── DataStore (settings/prefs)     │
 ├─────────────────────────────────────┤
 │  Service Layer                      │
-│  ├── OverlayService (floating window)│
-│  └── ClipboardService (auto-detect) │
+│  └── OverlayService (floating window)│
 └─────────────────────────────────────┘
 ```
 
@@ -74,17 +72,19 @@ MVVM + Clean Architecture
 
 ### Screen 2: Essay Correction (作文批改)
 
-- Large text input area for English essay
+- Four input methods: text input, camera capture, gallery image, PDF file
+- Large text input area for English essay (text mode)
 - "Submit for Correction" button
-- Results displayed in two tabs:
+- Results displayed in three tabs:
   - **Correction View**: inline diff with color-coded corrections (red=deleted, green=added, yellow=grammar note)
   - **Corrected Version**: clean corrected essay for reference
+  - **Writing Tips**: grammar/vocabulary/structure/style advice
 - Copy/export corrected version
 - Loading/error/empty states
 
 ### Screen 3: Settings (设置)
 
-- API Base URL input (default: OpenCode Go endpoint)
+- API Base URL input (default: Xiaomi MiMo endpoint)
 - API Key input (masked)
 - Model selector (dropdown, default: mimo-v2.5)
 - "Test Connection" button with status indicator
@@ -99,7 +99,6 @@ MVVM + Clean Architecture
   - Quick translate button
   - Result display
   - Copy result / close
-- **Clipboard Monitor**: optional — detect copied text, auto-show translation
 - Requires `SYSTEM_ALERT_WINDOW` permission
 - Foreground Service with persistent notification
 
@@ -118,7 +117,7 @@ Overlay is independent of navigation — launched via system permission + servic
 ### Settings (DataStore)
 
 ```
-api_base_url: String = "https://api.opencode.ai/v1"
+api_base_url: String = "https://api.xiaomimimo.com/v1"
 api_key: String = ""
 model: String = "mimo-v2.5"
 proxy_enabled: Boolean = false
@@ -126,16 +125,10 @@ proxy_host: String = ""
 proxy_port: Int = 0
 ```
 
-### Translation History (Room, optional Phase 2)
+### Translation History (in-memory cache, not persisted)
 
 ```
-TranslationEntity:
-  id: Long (auto)
-  source_text: String
-  translated_text: String
-  source_lang: String
-  target_lang: String
-  timestamp: Long
+TranslationCache (in-memory, recent translations only)
 ```
 
 ## API Integration
@@ -234,10 +227,9 @@ Following user's UI preference:
 ## Non-Goals (v1)
 
 - Speech/TTS integration
-- Offline translation
 - User accounts / cloud sync
 - Gamification / flashcards
-- Multiple language pairs (EN↔ZH only for v1)
+- Multiple language pairs limited (v1 supports 20 languages)
 
 ## Decision Register
 

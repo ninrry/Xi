@@ -1,10 +1,11 @@
-# DECISIONS.md — LingoFlow
+# DECISIONS.md — Xi
 
-## D1: API Provider — OpenCode Go
+## D1: API Provider — Xiaomi MiMo (default)
 
 - **Date:** 2026-07-04
-- **Decision:** Use OpenCode Go as the default AI API provider
-- **Endpoint:** `https://opencode.ai/zen/go/v1`
+- **Decision:** Use Xiaomi MiMo as the default AI API provider; OpenCode Go and Custom are selectable alternatives
+- **Default endpoint:** `https://api.xiaomimimo.com/v1`
+- **OpenCode Go endpoint:** `https://opencode.ai/zen/go/v1`
 - **Default model:** `mimo-v2.5` (cheapest, ~30K requests/5h)
 - **Rationale:** Low cost ($5 first month), OpenAI-compatible API, good model selection
 - **Trade-off:** Requires internet, no offline mode
