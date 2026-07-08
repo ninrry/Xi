@@ -1,7 +1,10 @@
 package luzzr.xi.data.repository
 
 import android.util.Log
+import luzzr.xi.domain.model.ModelDownloadProgress
+import luzzr.xi.domain.model.ModelDownloadState
 import luzzr.xi.domain.model.SupportedLanguage
+import luzzr.xi.domain.repository.MlKitModelGateway
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.common.model.RemoteModelManager
 import com.google.mlkit.nl.translate.TranslateLanguage
@@ -18,23 +21,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
-
-enum class ModelDownloadState {
-    IDLE, DOWNLOADING, COMPLETED, FAILED
-}
-
-data class ModelDownloadProgress(
-    val state: ModelDownloadState = ModelDownloadState.IDLE,
-    val progress: Float = 0f,
-    val bytesReceived: Long = 0L,
-    val totalBytes: Long = 0L,
-    val message: String = ""
-)
 
 data class LanguageModelStatus(
     val sourceLang: String,
@@ -44,7 +36,7 @@ data class LanguageModelStatus(
 )
 
 @Singleton
-class MlKitModelManager @Inject constructor() {
+class MlKitModelManager @Inject constructor() : MlKitModelGateway {
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -55,12 +47,13 @@ class MlKitModelManager @Inject constructor() {
 
     private var downloadJob: Job? = null
     private var currentProgressJob: Job? = null
+    private var currentDownloadKey: String? = null
 
     fun getStatus(sourceLang: String, targetLang: String): ModelDownloadState {
         return downloadStates[key(sourceLang, targetLang)] ?: ModelDownloadState.IDLE
     }
 
-    suspend fun isModelDownloaded(
+    override suspend fun isModelDownloaded(
         sourceLang: String, 
         targetLang: String,
         sourceCode: String,
@@ -100,15 +93,15 @@ class MlKitModelManager @Inject constructor() {
         listeners.remove(listener)
     }
 
-    fun addProgressListener(listener: (String, ModelDownloadProgress) -> Unit) {
+    override fun addProgressListener(listener: (String, ModelDownloadProgress) -> Unit) {
         progressListeners.add(listener)
     }
 
-    fun removeProgressListener(listener: (String, ModelDownloadProgress) -> Unit) {
+    override fun removeProgressListener(listener: (String, ModelDownloadProgress) -> Unit) {
         progressListeners.remove(listener)
     }
 
-    suspend fun downloadModel(
+    override suspend fun downloadModel(
         sourceLang: String,
         targetLang: String,
         sourceCode: String?,
@@ -120,8 +113,30 @@ class MlKitModelManager @Inject constructor() {
 
         val modelKey = key(sourceLang, targetLang)
 
-        // Cancel any existing download
-        cancelDownload()
+        // Cancel a *different* previously in-flight download (do not cancel our own job).
+        val myJob = coroutineContext[Job]
+        val prevJob = downloadJob
+        if (prevJob != null && prevJob != myJob) {
+            prevJob.cancel()
+            currentProgressJob?.cancel()
+            currentProgressJob = null
+            val prevKey = currentDownloadKey
+            if (prevKey != null && prevKey != modelKey &&
+                downloadStates[prevKey] == ModelDownloadState.DOWNLOADING
+            ) {
+                downloadStates[prevKey] = ModelDownloadState.IDLE
+                downloadProgress[prevKey] = downloadProgress[prevKey]?.copy(
+                    state = ModelDownloadState.IDLE,
+                    progress = 0f
+                ) ?: ModelDownloadProgress(state = ModelDownloadState.IDLE)
+                notifyProgressListeners(prevKey)
+            }
+        }
+        currentDownloadKey = modelKey
+        // Track this coroutine as the in-flight job so cancelDownload() can actually
+        // cancel a download started directly (e.g. from the ViewModel's scope), not just
+        // the unused retryDownload() path.
+        downloadJob = myJob
 
         downloadStates[modelKey] = ModelDownloadState.DOWNLOADING
         downloadProgress[modelKey] = ModelDownloadProgress(
@@ -176,21 +191,26 @@ class MlKitModelManager @Inject constructor() {
 
                 cont.invokeOnCancellation {
                     translator.close()
-                    downloadStates[modelKey] = ModelDownloadState.FAILED
-                    downloadProgress[modelKey] = downloadProgress[modelKey]?.copy(
-                        state = ModelDownloadState.FAILED,
-                        message = "Download cancelled"
-                    ) ?: ModelDownloadProgress(
-                        state = ModelDownloadState.FAILED,
-                        message = "Download cancelled"
-                    )
-                    notifyListeners()
-                    notifyProgressListeners(modelKey)
+                    if (currentDownloadKey == modelKey) {
+                        downloadStates[modelKey] = ModelDownloadState.FAILED
+                        downloadProgress[modelKey] = downloadProgress[modelKey]?.copy(
+                            state = ModelDownloadState.FAILED,
+                            message = "Download cancelled"
+                        ) ?: ModelDownloadProgress(
+                            state = ModelDownloadState.FAILED,
+                            message = "Download cancelled"
+                        )
+                        notifyListeners()
+                        notifyProgressListeners(modelKey)
+                    }
                 }
             }
 
-            // Smooth progress to 100% on success
-            currentProgressJob?.join()
+            // Stop the asymptotic progress simulation. The real download already
+            // reported its terminal state, so we cancel the sim job instead of
+            // join()-ing it (its loop is infinite and only ends via cancellation,
+            // which would otherwise deadlock this coroutine on success).
+            currentProgressJob?.cancel()
             if (result.isSuccess) {
                 downloadProgress[modelKey] = ModelDownloadProgress(
                     state = ModelDownloadState.COMPLETED,
@@ -220,25 +240,24 @@ class MlKitModelManager @Inject constructor() {
         }
     }
 
-    fun cancelDownload() {
+    override fun cancelDownload() {
         currentProgressJob?.cancel()
         currentProgressJob = null
         downloadJob?.cancel()
         downloadJob = null
 
-        // Reset all downloading states
-        downloadStates.keys().toList().forEach { key ->
-            if (downloadStates[key] == ModelDownloadState.DOWNLOADING) {
-                downloadStates[key] = ModelDownloadState.FAILED
-                downloadProgress[key] = downloadProgress[key]?.copy(
-                    state = ModelDownloadState.FAILED,
-                    message = "Cancelled"
-                ) ?: ModelDownloadProgress(
-                    state = ModelDownloadState.FAILED,
-                    message = "Cancelled"
-                )
-                notifyProgressListeners(key)
-            }
+        // Only the in-flight download key is affected, not every DOWNLOADING entry.
+        val key = currentDownloadKey
+        if (key != null && downloadStates[key] == ModelDownloadState.DOWNLOADING) {
+            downloadStates[key] = ModelDownloadState.FAILED
+            downloadProgress[key] = downloadProgress[key]?.copy(
+                state = ModelDownloadState.FAILED,
+                message = "Cancelled"
+            ) ?: ModelDownloadProgress(
+                state = ModelDownloadState.FAILED,
+                message = "Cancelled"
+            )
+            notifyProgressListeners(key)
         }
         notifyListeners()
     }
@@ -249,6 +268,12 @@ class MlKitModelManager @Inject constructor() {
         sourceCode: String?,
         targetCode: String?
     ) {
+        // Cancel any previous job before launching the retry so it cannot self-cancel.
+        downloadJob?.cancel()
+        currentProgressJob?.cancel()
+        currentProgressJob = null
+        downloadJob = null
+
         // Reset state to idle for retry
         val modelKey = key(sourceLang, targetLang)
         downloadStates[modelKey] = ModelDownloadState.IDLE

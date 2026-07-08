@@ -14,7 +14,7 @@ val DividerColor = Color(0xFFDDD7CE)
 val CorrectionDelete = Color(0xFFC4918A)
 val CorrectionAdd = Color(0xFF8FAA8C)
 val CorrectionAddBg = Color(0xFFEDEBE6)
-val CorrectionNote = Color(0xFFB8960B)
+val CorrectionNote = Color(0xFFA08C6E)
 val CorrectionNoteBg = Color(0xFFF3EDE4)
 
 val OverlayBg = Color(0xF5F4F1EA)

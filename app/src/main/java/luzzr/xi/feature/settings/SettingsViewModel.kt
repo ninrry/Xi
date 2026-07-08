@@ -8,11 +8,12 @@ import luzzr.xi.core.datastore.AppSettings
 import luzzr.xi.core.datastore.SettingsDataStore
 import luzzr.xi.domain.model.SupportedLanguage
 import luzzr.xi.domain.model.UiText
-import luzzr.xi.data.repository.ModelDownloadProgress
-import luzzr.xi.data.repository.ModelDownloadState
-import luzzr.xi.data.repository.MlKitModelManager
+import luzzr.xi.domain.model.ModelDownloadProgress
+import luzzr.xi.domain.model.ModelDownloadState
+import luzzr.xi.domain.repository.MlKitModelGateway
 import luzzr.xi.domain.repository.SettingsGateway
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,20 +62,28 @@ sealed interface SettingsUiEvent {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
-    private val mlKitModelManager: MlKitModelManager,
+    private val mlKitModelManager: MlKitModelGateway,
     private val apiRepository: SettingsGateway,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    private var mlKitSourceLang = SupportedLanguage.ENGLISH.displayName
-    private var mlKitTargetLang = SupportedLanguage.CHINESE.displayName
-    private var mlKitSourceCode = "en"
-    private var mlKitTargetCode = "zh"
+    private var mlKitStatusCached: Boolean? = null
+    private var mlKitStatusCacheTime: Long = 0
+    private val mlKitStatusCacheValidityMs = 30_000L // 30 seconds
+
+    private data class MlKitLanguageConfig(
+        val sourceLang: SupportedLanguage = SupportedLanguage.ENGLISH,
+        val targetLang: SupportedLanguage = SupportedLanguage.CHINESE,
+        val sourceCode: String = "en",
+        val targetCode: String = "zh"
+    )
+
+    private var mlKitLanguageConfig = MlKitLanguageConfig()
 
     private val progressListener: (String, ModelDownloadProgress) -> Unit = { _, progress ->
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             val state = when (progress.state) {
                 ModelDownloadState.DOWNLOADING -> ModelDownloadState.DOWNLOADING
                 ModelDownloadState.COMPLETED -> ModelDownloadState.COMPLETED
@@ -145,13 +154,17 @@ class SettingsViewModel @Inject constructor(
             SettingsUiEvent.CancelMlKitDownloadClicked -> cancelMlKitDownload()
             SettingsUiEvent.RetryMlKitDownloadClicked -> retryMlKitDownload()
             is SettingsUiEvent.MlKitSourceLangChanged -> {
-                mlKitSourceLang = event.lang.displayName
-                mlKitSourceCode = event.lang.code
+                mlKitLanguageConfig = mlKitLanguageConfig.copy(
+                    sourceLang = event.lang,
+                    sourceCode = event.lang.code
+                )
                 _uiState.update { it.copy(mlKitSourceLang = event.lang) }
             }
             is SettingsUiEvent.MlKitTargetLangChanged -> {
-                mlKitTargetLang = event.lang.displayName
-                mlKitTargetCode = event.lang.code
+                mlKitLanguageConfig = mlKitLanguageConfig.copy(
+                    targetLang = event.lang,
+                    targetCode = event.lang.code
+                )
                 _uiState.update { it.copy(mlKitTargetLang = event.lang) }
             }
         }
@@ -190,6 +203,8 @@ class SettingsViewModel @Inject constructor(
                     testStatus = TestStatus.Success(modelCount = models.size),
                     availableModels = models
                 ) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.update { it.copy(
                     testStatus = TestStatus.Failure(e.message ?: "Unknown error")
@@ -207,31 +222,36 @@ class SettingsViewModel @Inject constructor(
                 mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_prepare_download)
             ) }
 
-            val result = mlKitModelManager.downloadModel(
-                sourceLang = mlKitSourceLang,
-                targetLang = mlKitTargetLang,
-                sourceCode = mlKitSourceCode,
-                targetCode = mlKitTargetCode
-            )
+            try {
+                val config = mlKitLanguageConfig
+                val result = mlKitModelManager.downloadModel(
+                    sourceLang = config.sourceLang.displayName,
+                    targetLang = config.targetLang.displayName,
+                    sourceCode = config.sourceCode,
+                    targetCode = config.targetCode
+                )
 
-            result.fold(
-                onSuccess = {
-                    _uiState.update { it.copy(
-                        mlKitDownloading = false,
-                        mlKitDownloadState = ModelDownloadState.COMPLETED,
-                        mlKitDownloadProgress = 1f,
-                        mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready)
-                    ) }
-                },
-                onFailure = { e ->
-                    _uiState.update { it.copy(
-                        mlKitDownloading = false,
-                        mlKitDownloadState = ModelDownloadState.FAILED,
-                        mlKitDownloadMessage = e.message?.let { UiText.DynamicString(it) }
-                            ?: UiText.StringResource(luzzr.xi.R.string.mlkit_download_retry)
-                    ) }
-                }
-            )
+                result.fold(
+                    onSuccess = {
+                        _uiState.update { it.copy(
+                            mlKitDownloading = false,
+                            mlKitDownloadState = ModelDownloadState.COMPLETED,
+                            mlKitDownloadProgress = 1f,
+                            mlKitDownloadMessage = UiText.StringResource(luzzr.xi.R.string.mlkit_model_ready)
+                        ) }
+                    },
+                    onFailure = { e ->
+                        _uiState.update { it.copy(
+                            mlKitDownloading = false,
+                            mlKitDownloadState = ModelDownloadState.FAILED,
+                            mlKitDownloadMessage = e.message?.let { UiText.DynamicString(it) }
+                                ?: UiText.StringResource(luzzr.xi.R.string.mlkit_download_retry)
+                        ) }
+                    }
+                )
+            } finally {
+                _uiState.update { it.copy(mlKitDownloading = false) }
+            }
         }
     }
 
@@ -257,12 +277,25 @@ class SettingsViewModel @Inject constructor(
 
     private fun checkMlKitStatus() {
         viewModelScope.launch {
-            val enZh = mlKitModelManager.isModelDownloaded(
-                mlKitSourceLang, 
-                mlKitTargetLang,
-                mlKitSourceCode,
-                mlKitTargetCode
-            )
+            val now = System.currentTimeMillis()
+            val cached = mlKitStatusCached
+            val isCachedValid = cached != null && (now - mlKitStatusCacheTime) < mlKitStatusCacheValidityMs
+
+            val config = mlKitLanguageConfig
+            val enZh = if (isCachedValid) {
+                cached
+            } else {
+                mlKitModelManager.isModelDownloaded(
+                    config.sourceLang.displayName,
+                    config.targetLang.displayName,
+                    config.sourceCode,
+                    config.targetCode
+                ).also {
+                    mlKitStatusCached = it
+                    mlKitStatusCacheTime = now
+                }
+            }
+
             _uiState.update { it.copy(
                 mlKitDownloadState = if (enZh) ModelDownloadState.COMPLETED else ModelDownloadState.IDLE,
                 mlKitDownloading = false,

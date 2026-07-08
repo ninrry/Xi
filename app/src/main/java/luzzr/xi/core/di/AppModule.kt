@@ -15,6 +15,10 @@ import luzzr.xi.data.repository.ApiRepositoryImpl
 import luzzr.xi.domain.repository.TranslationGateway
 import luzzr.xi.domain.repository.EssayGateway
 import luzzr.xi.domain.repository.SettingsGateway
+import luzzr.xi.domain.repository.LocalTranslationGateway
+import luzzr.xi.domain.repository.MlKitModelGateway
+import luzzr.xi.data.repository.MlKitTranslator
+import luzzr.xi.data.repository.MlKitModelManager
 import javax.inject.Singleton
 
 @Module
@@ -38,4 +42,12 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSettingsGateway(impl: ApiRepositoryImpl): SettingsGateway = impl
+
+    @Provides
+    @Singleton
+    fun provideLocalTranslationGateway(impl: MlKitTranslator): LocalTranslationGateway = impl
+
+    @Provides
+    @Singleton
+    fun provideMlKitModelGateway(impl: MlKitModelManager): MlKitModelGateway = impl
 }

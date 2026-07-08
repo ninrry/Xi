@@ -5,6 +5,7 @@ import android.util.Log
 import luzzr.xi.core.network.ApiProvider
 import luzzr.xi.core.network.NetworkCheck
 import luzzr.xi.core.datastore.SettingsDataStore
+import luzzr.xi.core.datastore.AppSettings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.flowOn
 import com.google.gson.Gson
 import luzzr.xi.core.network.OpenAiApi
 import luzzr.xi.domain.model.AppError
+import luzzr.xi.domain.model.UiText
 import luzzr.xi.domain.model.ChatStreamChunk
 import luzzr.xi.domain.model.Usage
 
@@ -28,14 +30,18 @@ abstract class ApiRepository(
     private val apiProvider: ApiProvider,
     private val networkCheck: NetworkCheck
 ) {
-    @Volatile private var api: OpenAiApi? = null
-    @Volatile private var cachedBaseUrl: String? = null
-    @Volatile private var cachedApiKey: String = ""
-    @Volatile private var cachedProxyEnabled: Boolean = false
-    @Volatile private var cachedProxyHost: String = ""
-    @Volatile private var cachedProxyPort: Int = 0
-    @Volatile private var cachedProviderId: String = "xiaomi_mimo"
-    @Volatile private var settingsSnapshot: luzzr.xi.core.datastore.AppSettings? = null
+    private data class ApiConfig(
+        val api: OpenAiApi? = null,
+        val baseUrl: String? = null,
+        val apiKey: String = "",
+        val proxyEnabled: Boolean = false,
+        val proxyHost: String = "",
+        val proxyPort: Int = 0,
+        val providerId: String = "xiaomi_mimo",
+        val settings: luzzr.xi.core.datastore.AppSettings? = null
+    )
+
+    @Volatile private var apiConfig: ApiConfig = ApiConfig()
 
     private val apiMutex = Mutex()
 
@@ -45,21 +51,21 @@ abstract class ApiRepository(
 
     protected suspend fun getApi(): OpenAiApi = apiMutex.withLock {
         val s = settingsDataStore.settings.first()
-        val cached = settingsSnapshot
-        if (cached != null && api != null &&
-            cached.apiBaseUrl == s.apiBaseUrl && cached.apiKey == s.apiKey &&
-            cached.proxyEnabled == s.proxyEnabled && cached.proxyHost == s.proxyHost && cached.proxyPort == s.proxyPort &&
-            cached.providerId == s.providerId
+        val cached = apiConfig
+        if (cached.settings != null && cached.api != null &&
+            cached.settings.apiBaseUrl == s.apiBaseUrl && cached.settings.apiKey == s.apiKey &&
+            cached.settings.proxyEnabled == s.proxyEnabled && cached.settings.proxyHost == s.proxyHost && cached.settings.proxyPort == s.proxyPort &&
+            cached.settings.providerId == s.providerId
         ) {
-            return api ?: throw AppError.ConfigError("Failed to create API client")
+            return cached.api
         }
-        settingsSnapshot = s
-        if (api == null || cachedBaseUrl != s.apiBaseUrl || cachedApiKey != s.apiKey ||
-            cachedProxyEnabled != s.proxyEnabled || cachedProxyHost != s.proxyHost || cachedProxyPort != s.proxyPort ||
-            cachedProviderId != s.providerId
+        val config = if (cached.api == null ||
+            cached.baseUrl != s.apiBaseUrl || cached.apiKey != s.apiKey ||
+            cached.proxyEnabled != s.proxyEnabled || cached.proxyHost != s.proxyHost || cached.proxyPort != s.proxyPort ||
+            cached.providerId != s.providerId
         ) {
             val provider = luzzr.xi.core.provider.ProviderRegistry.getProvider(s.providerId)
-            api = apiProvider.createApi(
+            val newApi = apiProvider.createApi(
                 providerConfig = provider,
                 baseUrlOverride = s.apiBaseUrl,
                 apiKey = s.apiKey,
@@ -67,20 +73,27 @@ abstract class ApiRepository(
                 proxyHost = s.proxyHost,
                 proxyPort = s.proxyPort
             )
-            cachedBaseUrl = s.apiBaseUrl
-            cachedApiKey = s.apiKey
-            cachedProxyEnabled = s.proxyEnabled
-            cachedProxyHost = s.proxyHost
-            cachedProxyPort = s.proxyPort
-            cachedProviderId = s.providerId
+            ApiConfig(
+                api = newApi,
+                baseUrl = s.apiBaseUrl,
+                apiKey = s.apiKey,
+                proxyEnabled = s.proxyEnabled,
+                proxyHost = s.proxyHost,
+                proxyPort = s.proxyPort,
+                providerId = s.providerId,
+                settings = s
+            )
+        } else {
+            cached.copy(settings = s)
         }
-        return api ?: throw AppError.ConfigError("Failed to create API client")
+        apiConfig = config
+        return config.api!!
     }
 
     suspend fun testConnection(): luzzr.xi.domain.model.ModelListResponse {
         val s = settingsDataStore.settings.first()
         if (s.apiKey.isBlank()) {
-            throw AppError.ConfigError(context.getString(luzzr.xi.R.string.error_empty_key))
+            throw AppError.ConfigError(UiText.StringResource(luzzr.xi.R.string.error_empty_key))
         }
         val provider = luzzr.xi.core.provider.ProviderRegistry.getProvider(s.providerId)
         if (!provider.supportsModelListing) {
@@ -91,15 +104,26 @@ abstract class ApiRepository(
 
     protected suspend fun <T> callWithRetry(
         maxRetries: Int = 2,
+        preloadedSettings: AppSettings? = null,
         block: suspend () -> Result<T>
     ): Result<T> = withContext(Dispatchers.IO) {
+        val s = preloadedSettings ?: run {
+            if (!networkCheck.isNetworkAvailable()) {
+                return@withContext Result.failure(AppError.NetworkError())
+            }
+            settingsDataStore.settings.first().also { settings ->
+                if (settings.apiKey.isBlank()) {
+                    return@withContext Result.failure(AppError.ConfigError(UiText.StringResource(luzzr.xi.R.string.error_empty_key)))
+                }
+            }
+        }
+
         if (!networkCheck.isNetworkAvailable()) {
             return@withContext Result.failure(AppError.NetworkError())
         }
 
-        val s = settingsDataStore.settings.first()
         if (s.apiKey.isBlank()) {
-            return@withContext Result.failure(AppError.ConfigError(context.getString(luzzr.xi.R.string.error_empty_key)))
+            return@withContext Result.failure(AppError.ConfigError(UiText.StringResource(luzzr.xi.R.string.error_empty_key)))
         }
 
         var lastError: Exception? = null
@@ -109,13 +133,14 @@ abstract class ApiRepository(
                 return@withContext block()
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is AppError.ConfigError) return@withContext Result.failure(e)
                 lastError = e
                 Log.w("ApiRepository", "Call attempt $attempt/${maxRetries + 1} failed", e)
 
                 if (e is retrofit2.HttpException) {
                     val code = e.code()
                     if (code in 400..499 && code != 429) {
-                        return@withContext Result.failure(AppError.ApiError("HTTP $code: ${e.message()}", code, s.providerId))
+                        return@withContext Result.failure(AppError.ApiError(UiText.DynamicString("HTTP $code: ${e.message()}"), code, s.providerId))
                     }
                 }
 
@@ -131,16 +156,29 @@ abstract class ApiRepository(
 
     protected fun streamWithRetry(
         maxRetries: Int = 2,
+        preloadedSettings: AppSettings? = null,
         block: suspend () -> okhttp3.ResponseBody
     ): Flow<Result<ChatStreamChunk>> = flow {
+        val s = preloadedSettings ?: run {
+            if (!networkCheck.isNetworkAvailable()) {
+                emit(Result.failure(AppError.NetworkError()))
+                return@flow
+            }
+            settingsDataStore.settings.first().also { settings ->
+                if (settings.apiKey.isBlank()) {
+                    emit(Result.failure(AppError.ConfigError(UiText.StringResource(luzzr.xi.R.string.error_empty_key))))
+                    return@flow
+                }
+            }
+        }
+
         if (!networkCheck.isNetworkAvailable()) {
             emit(Result.failure(AppError.NetworkError()))
             return@flow
         }
 
-        val s = settingsDataStore.settings.first()
         if (s.apiKey.isBlank()) {
-            emit(Result.failure(AppError.ConfigError(context.getString(luzzr.xi.R.string.error_empty_key))))
+            emit(Result.failure(AppError.ConfigError(UiText.StringResource(luzzr.xi.R.string.error_empty_key))))
             return@flow
         }
 
@@ -177,13 +215,17 @@ abstract class ApiRepository(
                 return@flow
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is AppError.ConfigError) {
+                    emit(Result.failure(e))
+                    return@flow
+                }
                 lastError = e
                 Log.w("ApiRepository", "Stream attempt $attempt/${maxRetries + 1} failed", e)
 
                 if (e is retrofit2.HttpException) {
                     val code = e.code()
                     if (code in 400..499 && code != 429) {
-                        emit(Result.failure(AppError.ApiError("HTTP $code: ${e.message()}", code, s.providerId)))
+                        emit(Result.failure(AppError.ApiError(UiText.DynamicString("HTTP $code: ${e.message()}"), code, s.providerId)))
                         return@flow
                     }
                 }

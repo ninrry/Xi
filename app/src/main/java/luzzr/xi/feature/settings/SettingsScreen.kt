@@ -213,7 +213,7 @@ fun SettingsScreen(
                         try {
                             val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(currentProvider.websiteUrl))
                             context.startActivity(intent)
-                        } catch (_: Exception) {}
+                        } catch (e: Exception) { android.util.Log.w("SettingsScreen", "open provider website failed", e) }
                     },
                     modifier = Modifier.padding(top = AppSpacing.xs)
                 ) {

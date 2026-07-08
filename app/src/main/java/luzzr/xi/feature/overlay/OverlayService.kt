@@ -36,11 +36,6 @@ import luzzr.xi.core.ui.theme.XiTheme
 import luzzr.xi.feature.overlay.ui.EdgePillTrigger
 import luzzr.xi.feature.overlay.ui.TranslationPanelContent
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -55,7 +50,6 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val savedStateRegistryController = SavedStateRegistryController.create(this)
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
@@ -78,9 +72,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         OverlayNotificationHelper.createChannel(this)
         startForeground(OverlayNotificationHelper.NOTIFICATION_ID, OverlayNotificationHelper.createNotification(this))
-        
-        overlayController.initialize(serviceScope)
-        
+
         lifecycleRegistry.currentState = Lifecycle.State.STARTED
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         showPill()
@@ -94,7 +86,6 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         touchHandler?.cancelLongPress()
         touchHandler = null
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
-        serviceScope.cancel()
         removeViewsPhysical()
         super.onDestroy()
     }

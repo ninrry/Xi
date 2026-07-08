@@ -1,6 +1,5 @@
 package luzzr.xi.domain.usecase
 
-import android.net.Uri
 import luzzr.xi.domain.model.CorrectionResult
 import luzzr.xi.domain.repository.EssayGateway
 import luzzr.xi.domain.model.EssayError
@@ -14,13 +13,13 @@ class CorrectEssayUseCase @Inject constructor(
         return essayRepo.correctFromText(text.trim(), effort)
     }
 
-    suspend fun correctFromImage(uri: Uri?, effort: String?): Result<CorrectionResult> {
-        if (uri == null) return Result.failure(EssayError.ImageNull)
-        return essayRepo.correctFromImage(uri, effort)
+    suspend fun correctFromImage(uriString: String?, effort: String?): Result<CorrectionResult> {
+        if (uriString.isNullOrEmpty()) return Result.failure(EssayError.ImageNull)
+        return essayRepo.correctFromImage(uriString, effort)
     }
 
-    suspend fun correctFromPdf(uri: Uri?, effort: String?): Result<CorrectionResult> {
-        if (uri == null) return Result.failure(EssayError.PdfNull)
-        return essayRepo.correctFromPdf(uri, effort)
+    suspend fun correctFromPdf(uriString: String?, effort: String?): Result<CorrectionResult> {
+        if (uriString.isNullOrEmpty()) return Result.failure(EssayError.PdfNull)
+        return essayRepo.correctFromPdf(uriString, effort)
     }
 }

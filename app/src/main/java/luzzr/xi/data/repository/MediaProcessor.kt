@@ -125,15 +125,15 @@ class MediaProcessor @Inject constructor(
                                 result.add(base64)
                                 bitmap.recycle()
                             } finally {
-                                try { page.close() } catch (_: Exception) {}
+                                try { page.close() } catch (e: Exception) { Log.w("MediaProc", "page.close failed", e) }
                             }
                         }
                         result
                     } finally {
-                        try { renderer.close() } catch (_: Exception) {}
+                        try { renderer.close() } catch (e: Exception) { Log.w("MediaProc", "renderer.close failed", e) }
                     }
                 } finally {
-                    try { pfd.close() } catch (_: Exception) {}
+                    try { pfd.close() } catch (e: Exception) { Log.w("MediaProc", "pfd.close failed", e) }
                 }
             } catch (e: Exception) {
                 Log.e("MediaProc", "renderPdfPagesAsBase64 failed", e)

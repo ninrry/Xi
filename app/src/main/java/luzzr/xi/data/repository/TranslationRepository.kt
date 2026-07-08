@@ -15,8 +15,11 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 import luzzr.xi.domain.model.AppError
+import luzzr.xi.domain.model.UiText
 import luzzr.xi.domain.repository.TranslationGateway
 import luzzr.xi.domain.prompt.PromptBuilder
+
+private val UNICODE_PATTERN = Regex("""\\u([0-9a-fA-F]{4})""")
 
 @Singleton
 class TranslationRepository @Inject constructor(
@@ -40,7 +43,14 @@ class TranslationRepository @Inject constructor(
             return Result.success(it)
         }
 
-        return callWithRetry {
+        if (!translationCache.markInFlight(text, sourceLang, targetLang, s.model, s.providerId)) {
+            translationCache.get(text, sourceLang, targetLang, s.model, s.providerId)?.let {
+                return Result.success(it)
+            }
+            return Result.failure(Exception("Request already in-flight"))
+        }
+
+        val result = callWithRetry(preloadedSettings = s) {
             val prompt = PromptBuilder.buildTranslatePrompt(sourceLang, targetLang, text)
             val request = ChatRequest(
                 model = s.model,
@@ -52,16 +62,16 @@ class TranslationRepository @Inject constructor(
             )
             val response = getApi().chatCompletions(request)
             if (response.error != null) {
-                Result.failure(AppError.ApiError(response.error.message ?: "Unknown API error"))
+                Result.failure(AppError.ApiError(UiText.DynamicString(response.error.message ?: "Unknown API error")))
             } else {
                 val rawContent = response.choices?.firstOrNull()?.message?.content
                 if (rawContent == null || rawContent !is String) {
                     Result.failure(AppError.EmptyResultError(
-                        context.getString(luzzr.xi.R.string.error_translate_result_empty)
+                        UiText.StringResource(luzzr.xi.R.string.error_translate_result_empty)
                     ))
                 } else {
                     val content: String = rawContent
-                    val parsed = jsonParser.parseTranslation(context, content)
+                    val parsed = jsonParser.parseTranslation(content)
                     parsed.map { result ->
                         result.usage = response.usage
                         translationCache.put(text, sourceLang, targetLang, s.model, s.providerId, result)
@@ -70,6 +80,12 @@ class TranslationRepository @Inject constructor(
                 }
             }
         }
+
+        if (result.isFailure) {
+            translationCache.removeInFlight(text, sourceLang, targetLang, s.model, s.providerId)
+        }
+
+        return result
     }
 
     override fun streamTranslate(
@@ -79,15 +95,22 @@ class TranslationRepository @Inject constructor(
         reasoningEffort: String?
     ): kotlinx.coroutines.flow.Flow<Result<TranslationResult>> = kotlinx.coroutines.flow.flow {
         val s = settingsDataStore.settings.first()
-        
+
         val cached = translationCache.get(text, sourceLang, targetLang, s.model, s.providerId)
         if (cached != null) {
             emit(Result.success(cached))
             return@flow
         }
 
+        if (!translationCache.markInFlight(text, sourceLang, targetLang, s.model, s.providerId)) {
+            translationCache.get(text, sourceLang, targetLang, s.model, s.providerId)?.let {
+                emit(Result.success(it))
+                return@flow
+            }
+        }
+
         val accumulatedRaw = StringBuilder()
-        streamWithRetry(maxRetries = 0) {
+        streamWithRetry(maxRetries = 0, preloadedSettings = s) {
             val prompt = PromptBuilder.buildTranslatePrompt(sourceLang, targetLang, text)
             val request = ChatRequest(
                 model = s.model,
@@ -116,7 +139,7 @@ class TranslationRepository @Inject constructor(
             }
         }
         
-        val parsed = jsonParser.parseTranslation(context, accumulatedRaw.toString())
+        val parsed = jsonParser.parseTranslation(accumulatedRaw.toString())
         if (parsed.isSuccess) {
             val fullResult = parsed.getOrNull() ?: return@flow
             translationCache.put(text, sourceLang, targetLang, s.model, s.providerId, fullResult)
@@ -144,8 +167,7 @@ class TranslationRepository @Inject constructor(
                 end++
             }
             val rawStr = afterKey.substring(start, minOf(end, afterKey.length))
-            val unicodePattern = Regex("""\\u([0-9a-fA-F]{4})""")
-            return unicodePattern.replace(
+            return UNICODE_PATTERN.replace(
                 rawStr.replace("\\\\", "\\")
                     .replace("\\\"", "\"")
                     .replace("\\n", "\n")

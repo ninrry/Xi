@@ -102,7 +102,7 @@ internal class BubbleTouchHandler(
                         onLongPress()
                     }
                 }
-                mainHandler.postDelayed(longPressRunnable!!, LONG_PRESS_MS)
+                longPressRunnable?.let { mainHandler.postDelayed(it, LONG_PRESS_MS) }
                 return true
             }
 
@@ -136,7 +136,7 @@ internal class BubbleTouchHandler(
                         lastY = newY
                         try {
                             windowManager.updateViewLayout(view, params)
-                        } catch (_: Exception) { }
+                        } catch (e: Exception) { Log.w("BubbleTouchHandler", "updateViewLayout failed", e) }
                     }
                 }
                 return true

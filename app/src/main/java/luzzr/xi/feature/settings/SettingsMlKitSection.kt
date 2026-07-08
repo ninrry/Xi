@@ -35,7 +35,7 @@ import luzzr.xi.core.ui.theme.AbstractIcons
 import luzzr.xi.core.ui.theme.AppShape
 import luzzr.xi.core.ui.theme.CorrectionAdd
 import luzzr.xi.core.ui.theme.CorrectionDelete
-import luzzr.xi.data.repository.ModelDownloadState
+import luzzr.xi.domain.model.ModelDownloadState
 import luzzr.xi.core.ui.theme.AppSpacing
 import luzzr.xi.core.ui.components.PressScaleBox
 import luzzr.xi.core.ui.theme.MotionTokens

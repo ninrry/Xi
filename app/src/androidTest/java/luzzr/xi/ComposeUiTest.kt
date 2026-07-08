@@ -211,7 +211,7 @@ class ComposeUiTest {
         assertNull(state.error)
         assertFalse(state.hasResult)
         assertEquals(InputMode.TEXT, state.inputMode)
-        assertNull(state.imageUri)
+        assertNull(state.imageUriString)
         assertEquals(0, state.pdfPageCount)
         assertEquals(0, state.pdfCurrentPage)
         assertEquals(ThinkingLevel.HIGH, state.thinkingLevel)

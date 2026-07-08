@@ -1,7 +1,9 @@
 package luzzr.xi.feature.overlay
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,16 +24,16 @@ class OverlayController @Inject constructor(
     private val translateUseCase: TranslateUseCase,
     private val settingsDataStore: SettingsDataStore
 ) {
-
-    private var coroutineScope: CoroutineScope? = null
+    // Owned, application-scoped scope. The controller is a @Singleton, so its
+    // lifetime matches the app, not any individual OverlayService instance.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val _uiState = MutableStateFlow(OverlayUiState())
     val uiState = _uiState.asStateFlow()
 
     private var translateJob: Job? = null
 
-    fun initialize(scope: CoroutineScope) {
-        coroutineScope = scope
+    init {
         scope.launch {
             settingsDataStore.settings.collect { s ->
                 _uiState.update { it.copy(
@@ -60,12 +62,12 @@ class OverlayController @Inject constructor(
 
     fun updateEngine(eng: TranslationEngine) {
         _uiState.update { it.copy(engine = eng) }
-        coroutineScope?.launch { settingsDataStore.updateTranslationEngine(eng.id) }
+        scope.launch { settingsDataStore.updateTranslationEngine(eng.id) }
     }
 
     fun updateThinkingLevel(lvl: ThinkingLevel) {
         _uiState.update { it.copy(thinkingLevel = lvl) }
-        coroutineScope?.launch { settingsDataStore.updateTranslateThinkingLevel(lvl.id) }
+        scope.launch { settingsDataStore.updateTranslateThinkingLevel(lvl.id) }
     }
 
     fun swapLanguages() {
@@ -98,7 +100,7 @@ class OverlayController @Inject constructor(
         }
 
         cancelTranslate()
-        translateJob = checkNotNull(coroutineScope) { "OverlayController not initialized" }.launch {
+        translateJob = scope.launch {
             _uiState.update { it.copy(isTranslating = true, isModelDownloading = false, errorMsg = null, resultText = "", usage = null) }
             try {
                 val engine = _uiState.value.engine

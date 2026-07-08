@@ -1,6 +1,5 @@
 package luzzr.xi.feature.essay
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import luzzr.xi.domain.model.ThinkingLevel
@@ -41,7 +40,7 @@ data class EssayUiState(
     val error: UiText? = null,
     val hasResult: Boolean = false,
     val inputMode: InputMode = InputMode.TEXT,
-    val imageUri: Uri? = null,
+    val imageUriString: String? = null,
     val pdfPageCount: Int = 0,
     val pdfCurrentPage: Int = 0,
     val thinkingLevel: ThinkingLevel = ThinkingLevel.HIGH,
@@ -52,8 +51,8 @@ data class EssayUiState(
 sealed interface EssayUiEvent {
     data class EssayTextChanged(val text: String) : EssayUiEvent
     data class InputModeChanged(val mode: InputMode) : EssayUiEvent
-    data class ImageUriSelected(val uri: Uri, val source: PhotoSource = PhotoSource.GALLERY) : EssayUiEvent
-    data class PdfUriSelected(val uri: Uri, val pageCount: Int) : EssayUiEvent
+    data class ImageUriSelected(val uriString: String, val source: PhotoSource = PhotoSource.GALLERY) : EssayUiEvent
+    data class PdfUriSelected(val uriString: String, val pageCount: Int) : EssayUiEvent
     data object CorrectClicked : EssayUiEvent
     data object ClearClicked : EssayUiEvent
     data object CancelCorrectClicked : EssayUiEvent
@@ -99,18 +98,18 @@ class EssayViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         inputMode = event.mode,
-                        imageUri = null,
+                        imageUriString = null,
                         pdfPageCount = 0
                     )
                 }
             }
             is EssayUiEvent.ImageUriSelected -> {
-                _uiState.update { it.copy(imageUri = event.uri, inputMode = InputMode.IMAGE, photoSource = event.source) }
+                _uiState.update { it.copy(imageUriString = event.uriString, inputMode = InputMode.IMAGE, photoSource = event.source) }
             }
             is EssayUiEvent.PdfUriSelected -> {
                 _uiState.update {
                     it.copy(
-                        imageUri = event.uri,
+                        imageUriString = event.uriString,
                         pdfPageCount = event.pageCount,
                         pdfCurrentPage = 0,
                         inputMode = InputMode.PDF
@@ -178,8 +177,8 @@ class EssayViewModel @Inject constructor(
             try {
                 val result = when (state.inputMode) {
                     InputMode.TEXT -> correctEssayUseCase.correctFromText(state.essayText, effort)
-                    InputMode.IMAGE -> correctEssayUseCase.correctFromImage(state.imageUri, effort)
-                    InputMode.PDF -> correctEssayUseCase.correctFromPdf(state.imageUri, effort)
+                    InputMode.IMAGE -> correctEssayUseCase.correctFromImage(state.imageUriString, effort)
+                    InputMode.PDF -> correctEssayUseCase.correctFromPdf(state.imageUriString, effort)
                 }
 
                 result.fold(

@@ -118,14 +118,14 @@ fun EssayScreen(
     LaunchedEffect(uiState.hasResult) {
         if (uiState.hasResult) selectedResultTab = 0
     }
-    val isEmpty = uiState.essayText.isEmpty() && uiState.imageUri == null && !uiState.hasResult
+    val isEmpty = uiState.essayText.isEmpty() && uiState.imageUriString == null && !uiState.hasResult
 
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             tempCameraUri?.let { uri ->
-                viewModel.onEvent(EssayUiEvent.ImageUriSelected(uri, PhotoSource.CAMERA))
+                viewModel.onEvent(EssayUiEvent.ImageUriSelected(uri.toString(), PhotoSource.CAMERA))
             }
         }
     }
@@ -156,13 +156,13 @@ fun EssayScreen(
                                 pageCount = renderer.pageCount
                             }
                         }
-                    } catch (_: Exception) {}
+                        } catch (e: Exception) { android.util.Log.w("EssayScreen", "pdf page count failed", e) }
                     withContext(Dispatchers.Main) {
-                        viewModel.onEvent(EssayUiEvent.PdfUriSelected(pdfUri, pageCount))
+                        viewModel.onEvent(EssayUiEvent.PdfUriSelected(pdfUri.toString(), pageCount))
                     }
                 }
             } else {
-                viewModel.onEvent(EssayUiEvent.ImageUriSelected(it))
+                viewModel.onEvent(EssayUiEvent.ImageUriSelected(it.toString()))
             }
         }
     }
@@ -178,9 +178,9 @@ fun EssayScreen(
                             pageCount = renderer.pageCount
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) { android.util.Log.w("EssayScreen", "pdf open failed", e) }
                 withContext(Dispatchers.Main) {
-                    viewModel.onEvent(EssayUiEvent.PdfUriSelected(pdfUri, pageCount))
+                    viewModel.onEvent(EssayUiEvent.PdfUriSelected(pdfUri.toString(), pageCount))
                 }
             }
         }
@@ -319,7 +319,7 @@ fun EssayScreen(
                 )
             }
             InputMode.IMAGE, InputMode.PDF -> {
-                if (uiState.imageUri != null) {
+                if (uiState.imageUriString != null) {
                     Box(modifier = Modifier.fillMaxWidth().clip(AppShape.card).background(MaterialTheme.colorScheme.surfaceVariant).padding(14.dp)) {
                         Text(
                             if (uiState.pdfPageCount > 0) stringResource(R.string.essay_pdf_pages, uiState.pdfPageCount)

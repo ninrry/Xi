@@ -2,6 +2,8 @@ package luzzr.xi.core.network
 
 import luzzr.xi.BuildConfig
 import luzzr.xi.core.provider.ProviderConfig
+import luzzr.xi.domain.model.UiText
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -69,13 +71,29 @@ class ApiProvider @Inject constructor() {
             chain.proceed(request)
         }
 
-        val logging = HttpLoggingInterceptor().apply {
+        val sensitiveHeaders = setOf(
+            "Authorization",
+            providerConfig.authHeaderName,
+            "api-key",
+            "x-api-key"
+        )
+        val logging = HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
+            override fun log(message: String) {
+                val masked = message.lineSequence().joinToString("\n") { line ->
+                    val header = sensitiveHeaders.firstOrNull { h ->
+                        line.startsWith("$h:", ignoreCase = true)
+                    }
+                    if (header != null) "$header: <redacted>" else line
+                }
+                Log.d("ApiProvider", masked)
+            }
+        }).apply {
             level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
         }
 
         val clientBuilder = sharedClient.newBuilder()
-            .addInterceptor(authInterceptor)
             .addInterceptor(logging)
+            .addInterceptor(authInterceptor)
             .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
             .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
             .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
@@ -91,7 +109,7 @@ class ApiProvider @Inject constructor() {
         val client = clientBuilder.build()
         val effectiveBaseUrl = baseUrlOverride.ifBlank { providerConfig.defaultBaseUrl }
         if (effectiveBaseUrl.isBlank() || (!effectiveBaseUrl.startsWith("http://") && !effectiveBaseUrl.startsWith("https://"))) {
-            throw luzzr.xi.domain.model.AppError.ConfigError("Invalid base URL")
+            throw luzzr.xi.domain.model.AppError.ConfigError(UiText.DynamicString("Invalid base URL"))
         }
         val url = if (effectiveBaseUrl.endsWith("/")) effectiveBaseUrl else "$effectiveBaseUrl/"
 

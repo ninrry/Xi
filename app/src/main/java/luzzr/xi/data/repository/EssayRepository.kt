@@ -19,6 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
 import luzzr.xi.domain.model.AppError
+import luzzr.xi.domain.model.UiText
 import luzzr.xi.R
 import luzzr.xi.domain.model.CorrectionResult
 import luzzr.xi.domain.repository.EssayGateway
@@ -37,10 +38,11 @@ class EssayRepository @Inject constructor(
     override suspend fun correctFromText(text: String, reasoningEffort: String?): Result<CorrectionResult> =
         correctEssay(text, reasoningEffort)
 
-    override suspend fun correctFromImage(imageUri: Uri, reasoningEffort: String?): Result<CorrectionResult> =
-        correctEssayFromImage(imageUri, reasoningEffort)
+    override suspend fun correctFromImage(imageUriString: String, reasoningEffort: String?): Result<CorrectionResult> =
+        correctEssayFromImage(Uri.parse(imageUriString), reasoningEffort)
 
-    override suspend fun correctFromPdf(pdfUri: Uri, reasoningEffort: String?): Result<CorrectionResult> {
+    override suspend fun correctFromPdf(pdfUriString: String, reasoningEffort: String?): Result<CorrectionResult> {
+        val pdfUri = Uri.parse(pdfUriString)
         val base64Pages = mediaProcessor.renderPdfPagesAsBase64(pdfUri)
         if (base64Pages.isEmpty()) {
             return Result.failure(AppError.UnknownError(Exception("Unable to read PDF")))
@@ -51,14 +53,14 @@ class EssayRepository @Inject constructor(
     private suspend fun executeCorrection(request: ChatRequest): Result<CorrectionResult> {
         val response = getApi().chatCompletions(request)
         if (response.error != null) {
-            return Result.failure(AppError.ApiError(response.error.message ?: "Unknown API error"))
+            return Result.failure(AppError.ApiError(UiText.DynamicString(response.error.message ?: "Unknown API error")))
         }
         val rawContent = response.choices?.firstOrNull()?.message?.content
         if (rawContent == null || rawContent !is String) {
-            return Result.failure(AppError.EmptyResultError(context.getString(R.string.error_essay_result_empty)))
+            return Result.failure(AppError.EmptyResultError(UiText.StringResource(luzzr.xi.R.string.error_essay_result_empty)))
         }
         val parsed = withContext(Dispatchers.Default) {
-            jsonParser.parseEssayCorrection(context, rawContent)
+            jsonParser.parseEssayCorrection(rawContent)
         }
         return parsed.map { json -> 
             json.usage = response.usage
@@ -69,28 +71,30 @@ class EssayRepository @Inject constructor(
     suspend fun correctEssay(
         essay: String,
         reasoningEffort: String? = "high"
-    ) = callWithRetry {
+    ): Result<CorrectionResult> {
         val s = settingsDataStore.settings.first()
         val thinkingLevel = ThinkingLevel.fromId(reasoningEffort ?: "high")
         val prompt = PromptBuilder.buildEssayTextPrompt(essay, thinkingLevel)
         val request = ChatRequest(
             model = s.model,
             messages = listOf(ChatMessage(role = "user", content = prompt)),
-            temperature = 0.2, // Lower than translation (0.3): correction needs precise, deterministic output
+            temperature = 0.2,
             maxTokens = 8192,
             reasoningEffort = reasoningEffort,
             responseFormat = ResponseFormat.json()
         )
-        executeCorrection(request)
+        return callWithRetry(preloadedSettings = s) {
+            executeCorrection(request)
+        }
     }
 
     suspend fun correctEssayFromImage(
         imageUri: Uri,
         reasoningEffort: String? = "high"
-    ) = callWithRetry {
+    ): Result<CorrectionResult> {
         val s = settingsDataStore.settings.first()
         val base64Image = mediaProcessor.imageUriToBase64(imageUri)
-            ?: return@callWithRetry Result.failure(AppError.UnknownError(Exception("Failed to read image")))
+            ?: return Result.failure(AppError.UnknownError(Exception("Failed to read image")))
 
         val thinkingLevel = ThinkingLevel.fromId(reasoningEffort ?: "high")
         val prompt = PromptBuilder.buildEssayImagePrompt(thinkingLevel)
@@ -101,12 +105,14 @@ class EssayRepository @Inject constructor(
         val request = ChatRequest(
             model = s.model,
             messages = listOf(ChatMessage(role = "user", content = contentParts)),
-            temperature = 0.2, // Lower than translation (0.3): correction needs precise, deterministic output
+            temperature = 0.2,
             maxTokens = 8192,
             reasoningEffort = reasoningEffort,
             responseFormat = ResponseFormat.json()
         )
-        executeCorrection(request)
+        return callWithRetry(preloadedSettings = s) {
+            executeCorrection(request)
+        }
     }
 
 
@@ -114,9 +120,9 @@ class EssayRepository @Inject constructor(
     suspend fun correctEssayFromBase64Images(
         base64Images: List<String>,
         reasoningEffort: String? = "high"
-    ) = callWithRetry {
+    ): Result<CorrectionResult> {
         if (base64Images.isEmpty()) {
-            return@callWithRetry Result.failure(AppError.UnknownError(Exception("No images provided")))
+            return Result.failure(AppError.UnknownError(Exception("No images provided")))
         }
 
         val s = settingsDataStore.settings.first()
@@ -134,12 +140,14 @@ class EssayRepository @Inject constructor(
         val request = ChatRequest(
             model = s.model,
             messages = listOf(ChatMessage(role = "user", content = contentParts)),
-            temperature = 0.2, // Lower than translation (0.3): correction needs precise, deterministic output
+            temperature = 0.2,
             maxTokens = 8192,
             reasoningEffort = reasoningEffort,
             responseFormat = ResponseFormat.json()
         )
-        executeCorrection(request)
+        return callWithRetry(preloadedSettings = s) {
+            executeCorrection(request)
+        }
     }
 
     // --- Result builder ---
