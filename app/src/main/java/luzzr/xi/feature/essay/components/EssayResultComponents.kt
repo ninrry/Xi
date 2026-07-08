@@ -63,7 +63,7 @@ fun CopyableHeader(title: String, content: String) {
             },
             modifier = Modifier
                 .size(48.dp)
-                .clip(AppShape.mini)
+                .clip(AppShape.button)
                 .semantics { contentDescription = copyDescription }
         ) {
             if (copied) AbstractIcons.CheckCircle(Modifier.size(16.dp), tint = LocalExtendedColors.current.correctionAdd)
@@ -212,7 +212,7 @@ fun CorrectedEssayTab(essay: String) {
     Column(modifier = Modifier.padding(AppSpacing.lg)) {
         CopyableHeader(stringResource(R.string.essay_tab_corrected), essay)
         Spacer(modifier = Modifier.height(AppSpacing.sm))
-        Box(modifier = Modifier.fillMaxWidth().clip(AppShape.mini).background(LocalExtendedColors.current.correctionAddBg).padding(AppSpacing.md)) {
+        Box(modifier = Modifier.fillMaxWidth().clip(AppShape.card).background(LocalExtendedColors.current.correctionAddBg).padding(AppSpacing.md)) {
             Text(essay, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground, lineHeight = 20.sp)
         }
     }
@@ -228,7 +228,7 @@ fun WritingTipsTab(tips: List<String>) {
             Text(stringResource(R.string.essay_no_suggestions), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
         } else {
             tips.forEach { tip ->
-                Box(modifier = Modifier.fillMaxWidth().padding(vertical = AppSpacing.xs).clip(AppShape.mini).background(LocalExtendedColors.current.correctionNoteBg).padding(AppSpacing.md)) {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = AppSpacing.xs).clip(AppShape.card).background(LocalExtendedColors.current.correctionNoteBg).padding(AppSpacing.md)) {
                     Text(tip.trimStart('-', ' '), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground, lineHeight = 18.sp)
                 }
             }

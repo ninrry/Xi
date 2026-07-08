@@ -144,7 +144,7 @@ fun TranslationPanelContent(
                         },
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(AppShape.mini)
+                            .clip(AppShape.button)
                     ) {
                         if (copied) {
                             AbstractIcons.CheckCircle(modifier = Modifier.size(16.dp), tint = LocalExtendedColors.current.correctionAdd)
@@ -157,7 +157,7 @@ fun TranslationPanelContent(
                         onClick = onLaunchEssay,
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(AppShape.mini)
+                            .clip(AppShape.button)
                     ) {
                         AbstractIcons.Edit(modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                     }
@@ -167,7 +167,7 @@ fun TranslationPanelContent(
                         onClick = onDismiss,
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(AppShape.mini)
+                            .clip(AppShape.button)
                             .semantics { contentDescription = closePanelDesc }
                     ) {
                         val closeDesc = stringResource(R.string.overlay_close)
@@ -192,9 +192,9 @@ fun TranslationPanelContent(
                     },
                     onPressScale = 0.97f,
                     modifier = Modifier
-                        .clip(AppShape.small)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
+                        .clip(AppShape.button)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                        .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.sm)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(sourceLang.nativeName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -228,12 +228,12 @@ fun TranslationPanelContent(
                         onSwap()
                     },
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(44.dp)
                         .graphicsLayer {
                             rotationZ = animatedSwapRotation
                         }
-                        .clip(AppShape.mini)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                        .clip(AppShape.button)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
                 ) {
                     AbstractIcons.Swap(modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                 }
@@ -247,9 +247,9 @@ fun TranslationPanelContent(
                     },
                     onPressScale = 0.97f,
                     modifier = Modifier
-                        .clip(AppShape.small)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
+                        .clip(AppShape.button)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                        .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.sm)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(targetLang.nativeName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -351,9 +351,10 @@ fun TranslationPanelContent(
                 PressScaleBox(
                     onClick = onStop,
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(AppShape.mini)
+                        .size(44.dp)
+                        .clip(AppShape.button)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.button)
                         .semantics { contentDescription = stopServiceDesc }
                 ) {
                     AbstractIcons.Close(modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
@@ -383,9 +384,10 @@ fun TranslationPanelContent(
                 Box(
                     modifier = Modifier.fillMaxWidth()
                         .heightIn(max = 200.dp)
-                        .clip(AppShape.mini)
+                        .clip(AppShape.card)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(AppSpacing.md)
+                        .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.card)
+                        .padding(AppSpacing.lg)
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(resultText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground, lineHeight = 18.sp)

@@ -126,44 +126,36 @@ private fun RowScope.FloatingNavItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val tintColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+    val tintColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
 
-    // Selected indicator background
+    // Ultra-minimalist indicator: just a tiny dot under the icon if selected, or nothing.
+    // We'll just rely on the tint color and an optional subtle background to indicate selection.
     val indicatorModifier = if (selected) {
         Modifier
-            .clip(AppShape.small)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+            .clip(AppShape.button)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
     } else {
         Modifier
     }
 
     PressScaleBox(
         onClick = onClick,
-        onPressScale = 0.97f,
+        onPressScale = 0.95f,
         modifier = Modifier
             .weight(1f)
+            .padding(horizontal = AppSpacing.xs)
             .then(indicatorModifier)
-            .clip(AppShape.small)
-            .padding(vertical = AppSpacing.sm, horizontal = AppSpacing.xs),
+            .clip(AppShape.button)
+            .padding(vertical = AppSpacing.sm),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            Box(modifier = Modifier.size(24.dp)) {
-                when (screen) {
-                    Screen.Translate -> AbstractIcons.Translate(modifier = Modifier.fillMaxSize(), tint = tintColor)
-                    Screen.Essay -> AbstractIcons.Edit(modifier = Modifier.fillMaxSize(), tint = tintColor)
-                    Screen.Settings -> AbstractIcons.Settings(modifier = Modifier.fillMaxSize(), tint = tintColor)
-                }
+        // Just the elegant minimalist icon
+        Box(modifier = Modifier.size(26.dp)) {
+            when (screen) {
+                Screen.Translate -> AbstractIcons.Translate(modifier = Modifier.fillMaxSize(), tint = tintColor)
+                Screen.Essay -> AbstractIcons.Edit(modifier = Modifier.fillMaxSize(), tint = tintColor)
+                Screen.Settings -> AbstractIcons.Settings(modifier = Modifier.fillMaxSize(), tint = tintColor)
             }
-            Text(
-                text = stringResource(screen.titleResId),
-                style = MaterialTheme.typography.labelSmall,
-                color = tintColor,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-            )
         }
     }
 }

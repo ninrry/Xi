@@ -12,7 +12,7 @@ plugins {
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
-    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+    FileInputStream(keystorePropertiesFile).reader(Charsets.UTF_8).use { keystoreProperties.load(it) }
 }
 
 android {
@@ -23,8 +23,8 @@ android {
         applicationId = "luzzr.xi"
         minSdk = 26
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.2.0"
+        versionCode = 12
+        versionName = "1.2.1"
     }
 
     signingConfigs {

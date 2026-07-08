@@ -119,10 +119,10 @@ fun <T> CollapsibleSelector(
                     PressScaleBox(
                         onClick = { onValueChange(value); showOptions = false },
                         modifier = Modifier
-                            .clip(AppShape.small)
+                            .clip(AppShape.button)
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background)
-                            .border(0.5.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, AppShape.small)
-                            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
+                            .border(0.5.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, AppShape.button)
+                            .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.sm)
                             .semantics { contentDescription = getDisplayName(value) }
                     ) {
                         Text(
