@@ -1,0 +1,38 @@
+package luzzr.xi.data.local
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "history_records")
+data class HistoryRecordEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val type: String,
+    val createdAt: Long,
+    val source: String = "app",
+    val inputText: String? = null,
+    val outputText: String? = null,
+    val sourceLang: String? = null,
+    val targetLang: String? = null,
+    val engine: String? = null,
+    val thinkingLevel: String? = null,
+    val model: String? = null,
+    val providerId: String? = null,
+    val detectedLanguage: String? = null,
+    val alternativesJson: String? = null,
+    val inputMode: String? = null,
+    val scoreGrammar: Int? = null,
+    val scoreVocab: Int? = null,
+    val scoreStructure: Int? = null,
+    val scoreStyle: Int? = null,
+    val scoreTotal: Int? = null,
+    val grade: String? = null,
+    val grammarErrorsJson: String? = null,
+    val vocabularyJson: String? = null,
+    val structureJson: String? = null,
+    val styleJson: String? = null,
+    val writingTipsJson: String? = null,
+    val originalEssay: String? = null,
+    val promptTokens: Int? = null,
+    val completionTokens: Int? = null,
+    val totalTokens: Int? = null
+)

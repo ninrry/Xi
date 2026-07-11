@@ -1,6 +1,7 @@
 package luzzr.xi
 
 import luzzr.xi.domain.model.AppError
+import luzzr.xi.domain.model.UiText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -9,63 +10,61 @@ import org.junit.Test
 class AppErrorTest {
 
     @Test
-    fun `NetworkError has default message`() {
+    fun `NetworkError has default uiText`() {
         val error = AppError.NetworkError()
-        assertEquals("Network Error", error.message)
+        assertTrue(error.uiText is UiText.StringResource)
     }
 
     @Test
     fun `NetworkError preserves cause`() {
         val cause = RuntimeException("connection timed out")
         val error = AppError.NetworkError(cause)
-        assertEquals("Network Error", error.message)
         assertEquals(cause, error.cause)
     }
 
     @Test
-    fun `ApiError has message and code`() {
-        val error = AppError.ApiError(message = "Rate limited", code = 429)
-        assertEquals("Rate limited", error.message)
+    fun `ApiError has uiText and code`() {
+        val error = AppError.ApiError(UiText.DynamicString("Rate limited"), code = 429)
+        assertEquals(UiText.DynamicString("Rate limited"), error.uiText)
         assertEquals(429, error.code)
     }
 
     @Test
-    fun `ConfigError has message`() {
-        val error = AppError.ConfigError(message = "Missing API key")
-        assertEquals("Missing API key", error.message)
+    fun `ConfigError has uiText`() {
+        val error = AppError.ConfigError(UiText.DynamicString("Missing API key"))
+        assertEquals(UiText.DynamicString("Missing API key"), error.uiText)
     }
 
     @Test
-    fun `EmptyResultError has default message`() {
+    fun `EmptyResultError has default uiText`() {
         val error = AppError.EmptyResultError()
-        assertEquals("Result is empty", error.message)
+        assertTrue(error.uiText is UiText.StringResource)
     }
 
     @Test
-    fun `UnknownError wraps cause message`() {
+    fun `UnknownError wraps cause`() {
         val cause = IllegalStateException("boom")
         val error = AppError.UnknownError(cause)
-        assertEquals("Unknown error: boom", error.message)
         assertEquals(cause, error.cause)
     }
 
     @Test
-    fun `ParseError has message and rawResponse`() {
-        val error = AppError.ParseError("Invalid JSON", """{"bad": json}""")
-        assertEquals("Invalid JSON", error.message)
+    fun `ParseError has uiText and rawResponse`() {
+        val error = AppError.ParseError(UiText.DynamicString("Invalid JSON"), """{"bad": json}""")
+        assertEquals(UiText.DynamicString("Invalid JSON"), error.uiText)
         assertEquals("""{"bad": json}""", error.rawResponse)
     }
 
     @Test
-    fun `ParseError has message without rawResponse`() {
-        val error = AppError.ParseError("Parse failed")
-        assertEquals("Parse failed", error.message)
+    fun `ParseError has uiText without rawResponse`() {
+        val error = AppError.ParseError(UiText.DynamicString("Parse failed"))
+        assertEquals(UiText.DynamicString("Parse failed"), error.uiText)
         assertNull(error.rawResponse)
     }
 
     @Test
     fun `ParseError extends AppError`() {
-        val error = AppError.ParseError("test")
+        val error = AppError.ParseError(UiText.DynamicString("test"))
         assertTrue(error is AppError)
     }
 }

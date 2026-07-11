@@ -11,6 +11,7 @@ class ScreenTest {
     fun allScreens_haveCorrectRoutes() {
         assertEquals("translate", Screen.Translate.route)
         assertEquals("essay", Screen.Essay.route)
+        assertEquals("history", Screen.History.route)
         assertEquals("settings", Screen.Settings.route)
     }
 
@@ -18,6 +19,7 @@ class ScreenTest {
     fun allScreens_haveNonZeroTitleResId() {
         assertNotEquals(0, Screen.Translate.titleResId)
         assertNotEquals(0, Screen.Essay.titleResId)
+        assertNotEquals(0, Screen.History.titleResId)
         assertNotEquals(0, Screen.Settings.titleResId)
     }
 }

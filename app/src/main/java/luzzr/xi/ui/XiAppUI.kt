@@ -84,7 +84,7 @@ fun XiAppUI(
                     .align(Alignment.BottomCenter)
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(bottom = AppSpacing.xl)
-                    .width(260.dp)
+                    .width(320.dp)
                     .clip(AppShape.button)
                     .background(MaterialTheme.colorScheme.background.copy(alpha = 0.9f))
                     .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.button)
@@ -154,6 +154,7 @@ private fun RowScope.FloatingNavItem(
             when (screen) {
                 Screen.Translate -> AbstractIcons.Translate(modifier = Modifier.fillMaxSize(), tint = tintColor)
                 Screen.Essay -> AbstractIcons.Edit(modifier = Modifier.fillMaxSize(), tint = tintColor)
+                Screen.History -> AbstractIcons.History(modifier = Modifier.fillMaxSize(), tint = tintColor)
                 Screen.Settings -> AbstractIcons.Settings(modifier = Modifier.fillMaxSize(), tint = tintColor)
             }
         }

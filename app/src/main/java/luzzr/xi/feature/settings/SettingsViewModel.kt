@@ -34,7 +34,8 @@ data class SettingsUiState(
     val mlKitDownloading: Boolean = false,
     val showProviderSwitchDialog: String? = null,
     val mlKitSourceLang: SupportedLanguage = SupportedLanguage.ENGLISH,
-    val mlKitTargetLang: SupportedLanguage = SupportedLanguage.CHINESE
+    val mlKitTargetLang: SupportedLanguage = SupportedLanguage.CHINESE,
+    val historyClearedMessage: Boolean = false
 )
 
 sealed class TestStatus {
@@ -57,6 +58,8 @@ sealed interface SettingsUiEvent {
     data object RetryMlKitDownloadClicked : SettingsUiEvent
     data class MlKitSourceLangChanged(val lang: SupportedLanguage) : SettingsUiEvent
     data class MlKitTargetLangChanged(val lang: SupportedLanguage) : SettingsUiEvent
+    data object ClearHistoryClicked : SettingsUiEvent
+    data object HistoryClearedMessageConsumed : SettingsUiEvent
 }
 
 @HiltViewModel
@@ -64,6 +67,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
     private val mlKitModelManager: MlKitModelGateway,
     private val apiRepository: SettingsGateway,
+    private val historyGateway: luzzr.xi.domain.repository.HistoryGateway,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -166,6 +170,15 @@ class SettingsViewModel @Inject constructor(
                     targetCode = event.lang.code
                 )
                 _uiState.update { it.copy(mlKitTargetLang = event.lang) }
+            }
+            SettingsUiEvent.ClearHistoryClicked -> {
+                viewModelScope.launch {
+                    historyGateway.deleteAll()
+                    _uiState.update { it.copy(historyClearedMessage = true) }
+                }
+            }
+            SettingsUiEvent.HistoryClearedMessageConsumed -> {
+                _uiState.update { it.copy(historyClearedMessage = false) }
             }
         }
     }

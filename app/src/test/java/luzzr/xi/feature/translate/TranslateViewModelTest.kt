@@ -105,7 +105,7 @@ class TranslateViewModelTest {
     fun `TranslateClicked updates state correctly on failure`() = runTest {
         viewModel.onEvent(TranslateUiEvent.InputChanged("Hello"))
         coEvery { translateUseCase(any(), any(), any(), any(), any()) } returns flowOf(Result.failure(
-            AppError.ApiError("Failed")
+            AppError.ApiError(luzzr.xi.domain.model.UiText.DynamicString("Failed"))
         ))
 
         viewModel.onEvent(TranslateUiEvent.TranslateClicked)

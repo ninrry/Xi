@@ -11,26 +11,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import luzzr.xi.core.ui.theme.MotionTokens
 import luzzr.xi.feature.essay.EssayScreen
+import luzzr.xi.feature.history.HistoryScreen
 import luzzr.xi.feature.settings.SettingsScreen
 import luzzr.xi.feature.translate.TranslateScreen
+
+private fun routeIndex(route: String?): Int = when (route) {
+    Screen.Translate.route -> 0
+    Screen.Essay.route -> 1
+    Screen.History.route -> 2
+    Screen.Settings.route -> 3
+    else -> 0
+}
 
 private fun getSlideDirection(
     initialRoute: String?,
     targetRoute: String?
 ): AnimatedContentTransitionScope.SlideDirection {
-    val initialIdx = when (initialRoute) {
-        Screen.Translate.route -> 0
-        Screen.Essay.route -> 1
-        Screen.Settings.route -> 2
-        else -> 0
-    }
-    val targetIdx = when (targetRoute) {
-        Screen.Translate.route -> 0
-        Screen.Essay.route -> 1
-        Screen.Settings.route -> 2
-        else -> 0
-    }
-    return if (targetIdx > initialIdx) {
+    return if (routeIndex(targetRoute) > routeIndex(initialRoute)) {
         AnimatedContentTransitionScope.SlideDirection.Left
     } else {
         AnimatedContentTransitionScope.SlideDirection.Right
@@ -71,6 +68,16 @@ fun AppNavigation(
                 slideOutOfContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
             }
         ) { EssayScreen() }
+
+        composable(
+            route = Screen.History.route,
+            enterTransition = {
+                slideIntoContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
+            },
+            exitTransition = {
+                slideOutOfContainer(getSlideDirection(initialState.destination.route, targetState.destination.route), animationSpec = tween(slideDur))
+            }
+        ) { HistoryScreen() }
 
         composable(
             route = Screen.Settings.route,

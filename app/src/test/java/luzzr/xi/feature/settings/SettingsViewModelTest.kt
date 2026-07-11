@@ -25,12 +25,13 @@ class SettingsViewModelTest {
         val mockDataStore = mockk<SettingsDataStore>()
         val mockMlKitManager = mockk<MlKitModelManager>()
         val mockApiRepo = mockk<ApiRepositoryImpl>()
+        val mockHistory = mockk<luzzr.xi.domain.repository.HistoryGateway>(relaxed = true)
 
         coEvery { mockDataStore.settings } returns flowOf(AppSettings(apiKey = "test_key"))
         coEvery { mockMlKitManager.addProgressListener(any()) } returns Unit
         coEvery { mockMlKitManager.isModelDownloaded(any(), any(), any(), any()) } returns true
 
-        val viewModel = SettingsViewModel(mockDataStore, mockMlKitManager, mockApiRepo)
+        val viewModel = SettingsViewModel(mockDataStore, mockMlKitManager, mockApiRepo, mockHistory)
 
         assertEquals("test_key", viewModel.uiState.value.settings.apiKey)
     }

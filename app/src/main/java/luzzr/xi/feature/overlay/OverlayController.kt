@@ -14,6 +14,7 @@ import luzzr.xi.R
 import luzzr.xi.core.datastore.SettingsDataStore
 import luzzr.xi.domain.model.TranslationEngine
 import luzzr.xi.domain.model.UiText
+import luzzr.xi.domain.model.HistorySource
 import luzzr.xi.domain.usecase.TranslateUseCase
 import luzzr.xi.domain.model.ThinkingLevel
 import javax.inject.Inject
@@ -92,6 +93,13 @@ class OverlayController @Inject constructor(
         }
     }
 
+    fun clear() {
+        cancelTranslate()
+        _uiState.update {
+            it.copy(inputText = "", resultText = "", usage = null, errorMsg = null)
+        }
+    }
+
     fun translate() {
         val text = _uiState.value.inputText.trim()
         if (text.isEmpty()) {
@@ -114,7 +122,8 @@ class OverlayController @Inject constructor(
                     sourceLang = _uiState.value.sourceLang.displayName,
                     targetLang = _uiState.value.targetLang.displayName,
                     engine = engine,
-                    thinkingLevelId = _uiState.value.thinkingLevel.id
+                    thinkingLevelId = _uiState.value.thinkingLevel.id,
+                    source = HistorySource.OVERLAY
                 )
 
                 flow.collect { result ->

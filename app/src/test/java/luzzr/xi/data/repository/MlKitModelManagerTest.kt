@@ -1,10 +1,11 @@
 package luzzr.xi.data.repository
 
+import luzzr.xi.domain.model.ModelDownloadState
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class MlKitModelManagerTest {
-    
+
     @Test
     fun `initial status is IDLE`() {
         val manager = MlKitModelManager()
@@ -22,12 +23,7 @@ class MlKitModelManagerTest {
 
     @Test
     fun `cancelDownload resets DOWNLOADING to FAILED`() {
-        // Since we can't easily mock the internal download logic without mockkStatic,
-        // we test the public state management methods.
         val manager = MlKitModelManager()
-        // Wait, we can't easily force it into DOWNLOADING state without calling downloadModel,
-        // which requires Google Play Services.
-        // We'll just verify cancelDownload doesn't crash.
         manager.cancelDownload()
         assertEquals(ModelDownloadState.IDLE, manager.getStatus("en", "zh"))
     }

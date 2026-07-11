@@ -143,7 +143,9 @@ class TranslationRepositoryTest {
         assertTrue(result.isFailure)
         val error = result.exceptionOrNull()
         assertTrue("Expected ApiError but got ${error?.javaClass}", error is AppError.ApiError)
-        assertEquals("Rate limit exceeded", error?.message)
+        val uiText = (error as AppError.ApiError).uiText
+        assertTrue(uiText is luzzr.xi.domain.model.UiText.DynamicString)
+        assertEquals("Rate limit exceeded", (uiText as luzzr.xi.domain.model.UiText.DynamicString).value)
     }
 
     @Test

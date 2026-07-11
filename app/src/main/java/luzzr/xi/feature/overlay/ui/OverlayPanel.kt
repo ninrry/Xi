@@ -76,7 +76,7 @@ fun TranslationPanelContent(
     onSwap: () -> Unit,
     onCopy: () -> Unit,
     onDismiss: () -> Unit,
-    onStop: () -> Unit,
+    onClear: () -> Unit,
     onLaunchEssay: () -> Unit,
     onExitAnimationFinished: () -> Unit,
     onSourceLangChange: (SupportedLanguage) -> Unit,
@@ -86,7 +86,7 @@ fun TranslationPanelContent(
 ) {
     val context = LocalContext.current
     val closePanelDesc = stringResource(R.string.semantics_close_panel)
-    val stopServiceDesc = stringResource(R.string.semantics_stop_service)
+    val clearDesc = stringResource(R.string.translate_clear)
     // E4: Unified exit timing — both scale and alpha use same duration
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.85f,
@@ -347,17 +347,17 @@ fun TranslationPanelContent(
                     }
                 }
                 
-                // U2: Stop button — CircleShape → AppShape.mini
+                // Clear input + result (same semantics as main translate page)
                 PressScaleBox(
-                    onClick = onStop,
+                    onClick = onClear,
                     modifier = Modifier
                         .size(44.dp)
                         .clip(AppShape.button)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.button)
-                        .semantics { contentDescription = stopServiceDesc }
+                        .semantics { contentDescription = clearDesc }
                 ) {
-                    AbstractIcons.Close(modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
+                    AbstractIcons.Delete(modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
                 }
             }
 

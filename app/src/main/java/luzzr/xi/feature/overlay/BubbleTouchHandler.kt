@@ -13,12 +13,10 @@ import android.view.WindowManager
  * Touch handler for the mini floating bubble.
  *
  * Interactions:
- * - Tap (short press + release without significant movement) → open/close panel
- * - Drag (vertical or horizontal movement) → reposition bubble
- * - Long press (hold still >500ms) → stop overlay service
- *
- * The bubble sits 6dp inside the screen edge, avoiding Android 10+ edge-swipe-back
- * gesture conflict. Tap is the primary trigger instead of swipe.
+ * - Tap → open/close panel
+ * - Drag → reposition bubble
+ * - Long press (>500ms) → stop overlay service
+ * - Snap to edge on release → docked (compact + semi-transparent UI via callback)
  */
 internal class BubbleTouchHandler(
     private val params: WindowManager.LayoutParams,
@@ -29,16 +27,17 @@ internal class BubbleTouchHandler(
     private val view: View,
     private val onClick: () -> Unit,
     private val onLongPress: () -> Unit,
-    private val onPositionChanged: () -> Unit = {}
+    private val onPositionChanged: () -> Unit = {},
+    private val onDockStateChanged: (Boolean) -> Unit = {}
 ) {
     companion object {
-        private const val TAP_THRESHOLD_DP = 10      // max movement to still count as tap
-        private const val DRAG_THRESHOLD_DP = 12      // movement to enter drag mode
+        private const val TAP_THRESHOLD_DP = 10
+        private const val DRAG_THRESHOLD_DP = 12
         private const val LONG_PRESS_MS = 500L
-        private const val TOUCH_EXPAND_DP = 12        // expand 12dp beyond visual for easier tapping
-        private const val BUBBLE_VISUAL_SIZE_DP = 36
-        private const val EDGE_MARGIN_DP = 6          // 6dp from right edge
-        private const val SAFE_MARGIN_DP = 40         // keep bubble within this distance from top/bottom
+        private const val TOUCH_EXPAND_DP = 12
+        const val BUBBLE_VISUAL_SIZE_DP = 36
+        private const val EDGE_MARGIN_DP = 6
+        private const val SAFE_MARGIN_DP = 40
     }
 
     private val tapThresholdPx = (TAP_THRESHOLD_DP * density)
@@ -58,6 +57,7 @@ internal class BubbleTouchHandler(
     private var lastUpdateMs = 0L
     private var lastX = 0
     private var lastY = 0
+    private var isDocked = true
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private var longPressRunnable: Runnable? = null
@@ -66,12 +66,17 @@ internal class BubbleTouchHandler(
         expandTouchArea()
     }
 
+    private fun setDocked(docked: Boolean) {
+        if (isDocked == docked) return
+        isDocked = docked
+        onDockStateChanged(docked)
+    }
+
     private fun expandTouchArea() {
         val parent = view.parent as? View ?: return
         view.post {
             val rect = Rect()
             view.getHitRect(rect)
-            // Expand in all directions for easier tapping
             rect.left -= touchExpandPx
             rect.right += touchExpandPx
             rect.top -= touchExpandPx
@@ -94,8 +99,8 @@ internal class BubbleTouchHandler(
                 downTime = System.currentTimeMillis()
                 isDragging = false
                 hasTriggeredLongPress = false
+                setDocked(false)
 
-                // Schedule long press
                 longPressRunnable = Runnable {
                     if (!isDragging) {
                         hasTriggeredLongPress = true
@@ -111,7 +116,6 @@ internal class BubbleTouchHandler(
                 val dy = event.rawY - downY
                 val totalDist = Math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
 
-                // Enter drag mode if moved beyond threshold
                 if (!isDragging && !hasTriggeredLongPress && totalDist > dragThresholdPx) {
                     isDragging = true
                     cancelLongPress()
@@ -121,12 +125,9 @@ internal class BubbleTouchHandler(
                     val newX = initialX + dx.toInt()
                     val newY = initialY + dy.toInt()
 
-                    // Clamp X: keep bubble on-screen, 6dp from right edge preferred
                     val minX = 0
                     val maxX = screenWidth - bubbleSizePx
                     params.x = newX.coerceIn(minX, maxX)
-
-                    // Clamp Y: keep bubble within safe zone
                     params.y = newY.coerceIn(safeMarginPx, displayHeight - bubbleSizePx - safeMarginPx)
 
                     val now = System.currentTimeMillis()
@@ -136,7 +137,9 @@ internal class BubbleTouchHandler(
                         lastY = newY
                         try {
                             windowManager.updateViewLayout(view, params)
-                        } catch (e: Exception) { Log.w("BubbleTouchHandler", "updateViewLayout failed", e) }
+                        } catch (e: Exception) {
+                            Log.w("BubbleTouchHandler", "updateViewLayout failed", e)
+                        }
                     }
                 }
                 return true
@@ -145,7 +148,6 @@ internal class BubbleTouchHandler(
             MotionEvent.ACTION_UP -> {
                 cancelLongPress()
                 if (!isDragging && !hasTriggeredLongPress) {
-                    // Tap — open/close panel
                     val totalDist = Math.sqrt(
                         ((event.rawX - downX) * (event.rawX - downX) +
                          (event.rawY - downY) * (event.rawY - downY)).toDouble()
@@ -153,8 +155,8 @@ internal class BubbleTouchHandler(
                     if (totalDist < tapThresholdPx) {
                         onClick()
                     }
+                    setDocked(true)
                 }
-                // After drag, snap to nearest edge (left or right)
                 if (isDragging) {
                     snapToNearestEdge()
                 }
@@ -163,16 +165,13 @@ internal class BubbleTouchHandler(
 
             MotionEvent.ACTION_CANCEL -> {
                 cancelLongPress()
+                if (!isDragging) setDocked(true)
                 return true
             }
         }
         return false
     }
 
-    /**
-     * After dragging, snap the bubble to the nearest horizontal edge
-     * (left or right) with 6dp margin.
-     */
     private fun snapToNearestEdge() {
         val centerX = params.x + bubbleSizePx / 2
         val snapRight = centerX > screenWidth / 2
@@ -188,6 +187,7 @@ internal class BubbleTouchHandler(
         } catch (e: Exception) {
             Log.w("Overlay", "snapToEdge failed", e)
         }
+        setDocked(true)
         onPositionChanged()
     }
 
@@ -204,6 +204,7 @@ internal class BubbleTouchHandler(
         } catch (e: Exception) {
             Log.w("Overlay", "positionAtRightEdge failed", e)
         }
+        setDocked(true)
         onPositionChanged()
     }
 }

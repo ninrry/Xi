@@ -23,12 +23,20 @@
 - 默认极深思考深度，支持自定义
 
 ### 边缘悬浮条
-- 系统级边缘悬浮气泡，贴附屏幕右侧边缘，36dp 圆形图标
+- 系统级边缘悬浮气泡，贴附屏幕右侧边缘
 - **点击呼出**：点击气泡打开翻译面板
 - **自由拖拽**：拖动调整位置，松手自动吸附到最近边缘
+- **吸附少遮挡**：贴边时半透明缩小，按下/拖动恢复清晰
+- **一键清空**：面板右下角清空输入与结果（停止服务改由长按气泡 / 通知栏）
 - **长按停止**：长按气泡关闭悬浮窗服务
 - 支持语言选择、引擎切换、翻译与复制
 - 快捷设置磁贴一键启停
+
+### 学习历史
+- 自动记录 App / 悬浮窗翻译与作文批改结果（Room 持久化）
+- 独立底部 Tab：筛选、时间线列表、详情
+- 本周翻译/批改次数与最近作文分数统计
+- 设置中可一键清除历史
 
 ### 可配置
 - **AI 供应商模块**：内置小米 MiMo、OpenCode Go、自定义 API 三种供应商，一键切换
@@ -47,7 +55,7 @@
 | 架构 | MVVM + Hilt DI |
 | 网络 | Retrofit + OkHttp + Gson |
 | 离线翻译 | Google ML Kit Translate |
-| 本地存储 | DataStore Preferences |
+| 本地存储 | DataStore Preferences + Room |
 | 悬浮窗 | WindowManager + 前台 Service + 边缘悬浮气泡 |
 | 构建 | Gradle KTS + KSP + R8 混淆 |
 
@@ -81,6 +89,7 @@ export ANDROID_HOME=/path/to/android-sdk
 
 ## 版本历史
 
+- **v1.3.0** (2026-07-11) — 学习历史模块（Room + 第 4 Tab + 基础统计）、悬浮窗一键清空、气泡吸附半透明缩小
 - **v1.2.3** (2026-07-08) — 优化启动开场动画（图标放大淡出过渡到主界面）
 - **v1.2.2** (2026-07-08) — 替换应用启动器图标为全新设计
 - **v1.2.1** (2026-07-08) — UI 极简抽象化重构（AbstractIcons 细线条 Path 设计、底部导航栏简化）
@@ -95,6 +104,7 @@ export ANDROID_HOME=/path/to/android-sdk
 
 | 版本 | 日期 | arm64 (真机) | x86_64 (模拟器) |
 |------|------|-------------|----------------|
+| v1.3.0 | 2026-07-11 | [Xi_v1.3.0_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.3.0/Xi_v1.3.0_arm64.apk) | [Xi_v1.3.0_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.3.0/Xi_v1.3.0_x86_64.apk) |
 | v1.2.3 | 2026-07-08 | [Xi_v1.2.3_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.3/Xi_v1.2.3_arm64.apk) | — |
 | v1.2.2 | 2026-07-08 | [Xi_v1.2.2_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.2/Xi_v1.2.2_arm64.apk) | — |
 | v1.2.1 | 2026-07-08 | [Xi_v1.2.1_arm64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.1/Xi_v1.2.1_arm64.apk) | [Xi_v1.2.1_x86_64.apk](https://github.com/ninrry/Xi/releases/download/v1.2.1/Xi_v1.2.1_x86_64.apk) |

@@ -5,6 +5,7 @@
     <!-- Bottom Navigation -->
     <string name="tab_translate">Translate</string>
     <string name="tab_essay">Essay</string>
+    <string name="tab_history">History</string>
     <string name="tab_settings">Settings</string>
 
     <!-- Translate Screen -->
@@ -76,7 +77,29 @@
     <string name="settings_connection_testing">Testing…</string>
     <string name="settings_connection_success">Connection successful! Found %d models.</string>
     <string name="settings_connection_fail">Connection failed</string>
+    <string name="settings_section_history">History</string>
+    <string name="settings_clear_history">Clear all history</string>
+    <string name="settings_clear_history_done">History cleared</string>
     <string name="settings_section_about">About</string>
+
+    <!-- History Screen -->
+    <string name="history_title">Learning History</string>
+    <string name="history_empty_title">No records yet</string>
+    <string name="history_empty_desc">Translations and essay corrections will appear here</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_translate">Translate</string>
+    <string name="history_filter_essay">Essay</string>
+    <string name="history_type_translate">Translation</string>
+    <string name="history_type_essay">Essay</string>
+    <string name="history_stat_translate_week">Translations</string>
+    <string name="history_stat_essay_week">Essays</string>
+    <string name="history_stat_latest_score">Latest score</string>
+    <string name="history_detail_input">Source</string>
+    <string name="history_detail_output">Translation</string>
+    <string name="history_detail_original">Original</string>
+    <string name="history_detail_corrected">Corrected</string>
+    <string name="history_delete_record">Delete this record</string>
+    <string name="history_no_preview">(No preview)</string>
     <string name="settings_version">Version</string>
     <string name="settings_desc">AI-powered English Learning Assistant</string>
     <string name="settings_default_model_info">Default: Xiaomi MiMo (mimo-v2.5 model)</string>

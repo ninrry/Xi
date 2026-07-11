@@ -18,6 +18,7 @@ class TranslateUseCaseTest {
     fun `translate delegates to appropriate repository`() = runTest {
         val mockRepo = mockk<TranslationRepository>()
         val mockMlKit = mockk<MlKitTranslator>()
+        val mockHistory = mockk<luzzr.xi.domain.repository.HistoryGateway>(relaxed = true)
         val fakeResult = TranslationResult(
             translation = "Test translation",
             detectedLanguage = "English",
@@ -27,7 +28,7 @@ class TranslateUseCaseTest {
 
         coEvery { mockRepo.streamTranslate("Test", "English", "Chinese", "high") } returns flowOf(Result.success(fakeResult))
 
-        val useCase = TranslateUseCase(mockRepo, mockMlKit)
+        val useCase = TranslateUseCase(mockRepo, mockMlKit, mockHistory)
         val flow = useCase("Test", "English", "Chinese", TranslationEngine.AI, "high")
         val result = flow.first()
 

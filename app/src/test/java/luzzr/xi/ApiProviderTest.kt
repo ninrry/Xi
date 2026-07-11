@@ -151,7 +151,8 @@ class ApiProviderTest {
 
         assertTrue("Should have at least one interceptor", interceptors.isNotEmpty())
 
-        val authInterceptor = interceptors.first()
+        // Logging is added first; auth interceptor is last
+        val authInterceptor = interceptors.last()
 
         val originalRequest = Request.Builder()
             .url("https://api.example.com/test")
@@ -168,6 +169,7 @@ class ApiProviderTest {
                 .protocol(Protocol.HTTP_1_1)
                 .code(200)
                 .message("OK")
+                .body(okhttp3.ResponseBody.create(null, ByteArray(0)))
                 .build()
         }
 
@@ -196,7 +198,7 @@ class ApiProviderTest {
 
         val retrofit = extractRetrofit(api)
         val client = extractClient(retrofit)
-        val authInterceptor = client.interceptors.first()
+        val authInterceptor = client.interceptors.last()
 
         val originalRequest = Request.Builder()
             .url("https://api.xiaomimimo.com/v1/chat/completions")
@@ -214,6 +216,7 @@ class ApiProviderTest {
                 .protocol(Protocol.HTTP_1_1)
                 .code(200)
                 .message("OK")
+                .body(okhttp3.ResponseBody.create(null, ByteArray(0)))
                 .build()
         }
 

@@ -31,6 +31,7 @@ class ComposeUiTest {
     fun screen_allScreensHaveCorrectRoutes() {
         assertEquals("translate", Screen.Translate.route)
         assertEquals("essay", Screen.Essay.route)
+        assertEquals("history", Screen.History.route)
         assertEquals("settings", Screen.Settings.route)
     }
 
@@ -39,15 +40,17 @@ class ComposeUiTest {
         // titleResId should be a valid positive resource ID
         assertTrue("Translate titleResId should be positive", Screen.Translate.titleResId > 0)
         assertTrue("Essay titleResId should be positive", Screen.Essay.titleResId > 0)
+        assertTrue("History titleResId should be positive", Screen.History.titleResId > 0)
         assertTrue("Settings titleResId should be positive", Screen.Settings.titleResId > 0)
 
-        // All three should have distinct resource IDs
+        // All screens should have distinct resource IDs
         val titleResIds = setOf(
             Screen.Translate.titleResId,
             Screen.Essay.titleResId,
+            Screen.History.titleResId,
             Screen.Settings.titleResId
         )
-        assertEquals("All screens should have unique titleResId", 3, titleResIds.size)
+        assertEquals("All screens should have unique titleResId", 4, titleResIds.size)
     }
 
     // ==================== SupportedLanguage enum tests ====================

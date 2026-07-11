@@ -5,6 +5,7 @@
     <!-- Bottom Navigation -->
     <string name="tab_translate">翻译</string>
     <string name="tab_essay">作文</string>
+    <string name="tab_history">历史</string>
     <string name="tab_settings">设置</string>
 
     <!-- Translate Screen -->
@@ -76,7 +77,29 @@
     <string name="settings_connection_testing">测试中…</string>
     <string name="settings_connection_success">连接成功，发现 %d 个模型</string>
     <string name="settings_connection_fail">连接失败</string>
+    <string name="settings_section_history">历史数据</string>
+    <string name="settings_clear_history">清除全部历史</string>
+    <string name="settings_clear_history_done">历史已清除</string>
     <string name="settings_section_about">关于</string>
+
+    <!-- History Screen -->
+    <string name="history_title">学习历史</string>
+    <string name="history_empty_title">暂无记录</string>
+    <string name="history_empty_desc">完成翻译或作文批改后会显示在这里</string>
+    <string name="history_filter_all">全部</string>
+    <string name="history_filter_translate">翻译</string>
+    <string name="history_filter_essay">作文</string>
+    <string name="history_type_translate">翻译</string>
+    <string name="history_type_essay">作文批改</string>
+    <string name="history_stat_translate_week">本周翻译</string>
+    <string name="history_stat_essay_week">本周批改</string>
+    <string name="history_stat_latest_score">最近分数</string>
+    <string name="history_detail_input">原文</string>
+    <string name="history_detail_output">译文</string>
+    <string name="history_detail_original">原文</string>
+    <string name="history_detail_corrected">修正范文</string>
+    <string name="history_delete_record">删除此记录</string>
+    <string name="history_no_preview">（无预览）</string>
     <string name="settings_version">版本</string>
     <string name="settings_desc">AI 驱动的英语学习助手</string>
     <string name="settings_default_model_info">默认使用小米 MiMo (mimo-v2.5 模型)</string>

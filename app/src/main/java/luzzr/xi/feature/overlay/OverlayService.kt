@@ -14,12 +14,8 @@ import android.view.Gravity
 import android.view.WindowManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -29,9 +25,6 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import luzzr.xi.R
-import luzzr.xi.core.datastore.SettingsDataStore
-import luzzr.xi.domain.model.TranslationEngine
-import luzzr.xi.domain.usecase.TranslateUseCase
 import luzzr.xi.core.ui.theme.XiTheme
 import luzzr.xi.feature.overlay.ui.EdgePillTrigger
 import luzzr.xi.feature.overlay.ui.TranslationPanelContent
@@ -56,6 +49,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
     private var isStopping = false
     private var panelCloseTime = 0L
+    private var bubbleDocked by mutableStateOf(true)
 
     companion object {
         val isRunning = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -130,7 +124,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             setViewTreeSavedStateRegistryOwner(this@OverlayService)
             setContent {
                 XiTheme {
-                    EdgePillTrigger()
+                    EdgePillTrigger(docked = bubbleDocked)
                 }
             }
         }
@@ -147,7 +141,8 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                     android.widget.Toast.makeText(this@OverlayService, getString(R.string.overlay_service_stopping), android.widget.Toast.LENGTH_SHORT).show()
                     stopWithAnimation()
                 },
-            onPositionChanged = {}
+            onPositionChanged = {},
+            onDockStateChanged = { docked -> bubbleDocked = docked }
         )
 
         view.setOnTouchListener { _, event -> touchHandler?.handleTouchEvent(event) ?: false }
@@ -225,10 +220,7 @@ class OverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                         onSwap = { overlayController.swapLanguages() },
                         onCopy = { copyResult() },
                         onDismiss = { hidePanel() },
-                        onStop = {
-                            overlayController.setPanelVisible(false)
-                            isStopping = true
-                        },
+                        onClear = { overlayController.clear() },
                         onLaunchEssay = {
                             overlayController.setPanelVisible(false)
                             val mainIntent = Intent(this@OverlayService, luzzr.xi.MainActivity::class.java).apply {

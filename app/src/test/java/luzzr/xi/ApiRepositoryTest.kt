@@ -29,7 +29,7 @@ private class TestableApiRepository(
     suspend fun <T> testCallWithRetry(
         maxRetries: Int = 2,
         block: suspend () -> Result<T>
-    ): Result<T> = callWithRetry(maxRetries, block)
+    ): Result<T> = callWithRetry(maxRetries = maxRetries, block = block)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

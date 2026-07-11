@@ -435,6 +435,39 @@ fun SettingsScreen(
             onEvent = { viewModel.onEvent(it) }
         )
 
+        // ====== History Section ======
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_section_history))
+            PressScaleBox(
+                onClick = { viewModel.onEvent(SettingsUiEvent.ClearHistoryClicked) },
+                onPressScale = 0.98f,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(AppShape.button)
+                    .border(0.5.dp, MaterialTheme.colorScheme.outline, AppShape.button)
+                    .padding(vertical = AppSpacing.md),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    stringResource(R.string.settings_clear_history),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            if (uiState.historyClearedMessage) {
+                Spacer(modifier = Modifier.height(AppSpacing.xs))
+                Text(
+                    stringResource(R.string.settings_clear_history_done),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(2000)
+                    viewModel.onEvent(SettingsUiEvent.HistoryClearedMessageConsumed)
+                }
+            }
+        }
+
         // ====== Divider ======
         HorizontalDivider(
             modifier = Modifier.padding(horizontal = 48.dp),

@@ -114,6 +114,33 @@ object AbstractIcons {
     }
 
     @Composable
+    fun History(
+        modifier: Modifier = Modifier,
+        tint: Color = Color.Unspecified,
+        contentDescription: String? = null
+    ) {
+        val c = if (tint == Color.Unspecified) MaterialTheme.colorScheme.primary else tint
+        val finalMod = if (contentDescription != null) modifier.semantics { this.contentDescription = contentDescription } else modifier
+        Canvas(modifier = finalMod) {
+            val s = size.minDimension
+            val sw = s * 0.05f
+            // Clock + arc: abstract history
+            drawCircle(
+                color = c,
+                radius = s * 0.32f,
+                center = Offset(s * 0.5f, s * 0.5f),
+                style = Stroke(width = sw, cap = StrokeCap.Round)
+            )
+            val path = Path().apply {
+                moveTo(s * 0.5f, s * 0.32f)
+                lineTo(s * 0.5f, s * 0.5f)
+                lineTo(s * 0.68f, s * 0.58f)
+            }
+            drawPathLine(path, c, sw)
+        }
+    }
+
+    @Composable
     fun Sparkle(
         modifier: Modifier = Modifier,
         tint: Color = Color.Unspecified,

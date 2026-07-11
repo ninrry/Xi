@@ -23,8 +23,8 @@ android {
         applicationId = "luzzr.xi"
         minSdk = 26
         targetSdk = 36
-        versionCode = 14
-        versionName = "1.2.3"
+        versionCode = 15
+        versionName = "1.3.0"
     }
 
     signingConfigs {
@@ -47,7 +47,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            // Use release keystore when key.properties exists; otherwise fall back to debug for local packaging
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             ndk {
                 abiFilters += listOf("arm64-v8a")
             }
@@ -99,6 +104,11 @@ dependencies {
 
     // DataStore
     implementation(libs.datastore.preferences)
+
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     // Network
     implementation(libs.retrofit)

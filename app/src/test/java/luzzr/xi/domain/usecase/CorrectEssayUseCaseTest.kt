@@ -14,6 +14,7 @@ class CorrectEssayUseCaseTest {
     @Test
     fun `correctFromText delegates to repository`() = runTest {
         val mockRepo = mockk<EssayGateway>()
+        val mockHistory = mockk<luzzr.xi.domain.repository.HistoryGateway>(relaxed = true)
         val fakeResult = CorrectionResult(
             grammarErrors = emptyList(),
             vocabulary = emptyList(),
@@ -27,7 +28,7 @@ class CorrectEssayUseCaseTest {
         
         coEvery { mockRepo.correctFromText("Test essay", "high") } returns Result.success(fakeResult)
 
-        val useCase = CorrectEssayUseCase(mockRepo)
+        val useCase = CorrectEssayUseCase(mockRepo, mockHistory)
         val result = useCase.correctFromText("Test essay", "high")
 
         assertEquals(true, result.isSuccess)
@@ -37,7 +38,8 @@ class CorrectEssayUseCaseTest {
     @Test
     fun `correctFromText fails on empty text`() = runTest {
         val mockRepo = mockk<EssayGateway>()
-        val useCase = CorrectEssayUseCase(mockRepo)
+        val mockHistory = mockk<luzzr.xi.domain.repository.HistoryGateway>(relaxed = true)
+        val useCase = CorrectEssayUseCase(mockRepo, mockHistory)
         val result = useCase.correctFromText("   ", "high")
 
         assertEquals(true, result.isFailure)

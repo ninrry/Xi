@@ -56,11 +56,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         startScreenFlow.value = intent.getStringExtra("target_screen")?.let { screenName ->
-            when (screenName) {
-                "essay" -> Screen.Essay.route
-                "settings" -> Screen.Settings.route
-                else -> Screen.Translate.route
-            }
+                when (screenName) {
+                    "essay" -> Screen.Essay.route
+                    "history" -> Screen.History.route
+                    "settings" -> Screen.Settings.route
+                    else -> Screen.Translate.route
+                }
         }
         setContent {
             XiTheme {
